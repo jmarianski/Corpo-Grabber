@@ -1,0 +1,63 @@
+/* Part of the Inforex project */
+/* Copyright (C) 2013 Michał Marcińczuk, Jan Kocoń, Marcin Ptak */
+/* Wrocław University of Technology */
+
+.annotations span { 
+	border: 1px solid #F26C4F; 
+	border-bottom-width: 2px; 
+	display: inline-table; 
+	margin-bottom: 0px; 
+	position: relative; 
+	background-color: #FDC68A;
+}
+
+xyz {
+    border: 1px solid #777;
+    background: #eee;
+	border-bottom-width: 2px; 
+	display: inline-table; 
+	margin-bottom: 0px; 
+	position: relative;   
+}
+
+.annotations span span { margin: 0 0 2px 0; padding: 0px;}
+
+/*relations  */
+span.relationAvailable{
+	cursor : crosshair !important;	
+}
+
+span.relationGrey {
+	background: #ccc !important;
+	cursor : default !important;
+}
+
+span.hiddenAnnotation {
+	background: transparent !important;
+	border : none !important;
+}
+
+span.token{
+	border:1px solid #ddd !important;	
+	background: #efefef;
+	line-height: 160%;
+	display: inline;
+}
+
+div.eosSpan { padding: 0; }
+div.eosSpan hr {
+	border-width: 1px 0 0 0;
+	border-top: 1px solid #a40000; 
+	margin: 20px 0; 
+}
+
+h1 div.eosSpan hr,
+h2 div.eosSpan hr,
+h3 div.eosSpan hr {
+	margin: 2px 0;
+}
+
+.annotations span.wyznacznik_null_verb {
+    background: none repeat scroll 0 0 #ffffcc;
+    border: 1px dashed #cccc00;
+}

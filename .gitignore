@@ -1,0 +1,15 @@
+console/progress.txt
+console/ilp/local/*
+engine/templates_c/*
+engine/config.local.php
+console/ilp/logic*
+secured_data/*
+.metadata/.plugins/
+.metadata/**
+
+*~
+*.aux
+*.log
+*.backup
+*.swp
+nbproject/
