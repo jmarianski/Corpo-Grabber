@@ -35,7 +35,8 @@ class Index extends Controller
     {
         $data['title'] = $this->language->get('welcome_text');
         $data['welcome_message'] = $this->language->get('welcome_message');
-		$data['test'] = strip_tags(Page_Downloader::download1('https://en.wikipedia.org/wiki/Physical_test'));
+		$data['test'] = Page_Downloader::getText(
+		Page_Downloader::download1('https://en.wikipedia.org/wiki/Physical_test'));
         View::renderTemplate('header', $data);
         View::render('welcome/welcome', $data);
         View::renderTemplate('footer', $data);

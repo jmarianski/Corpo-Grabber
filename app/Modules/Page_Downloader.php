@@ -14,9 +14,14 @@ class Page_Downloader {
 		curl_setopt($ch, CURLOPT_FAILONERROR, 1);
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
 		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANYSAFE);
-		curl_setopt($ch,CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		$data = curl_exec($ch);
 		curl_close($ch);
+		return $data;
+	}
+	
+	public function getText($data, $tags = "<p><br><hr>") {
+		$data = strip_tags($data, $tags);
 		return $data;
 	}
 	
