@@ -12,6 +12,8 @@ use Core\Language;
 
 <p><?php echo $data['welcome_message'] ?></p>
 
+<p>Google: <?=$data['test'];?>
+
 <a class="btn btn-md btn-success" href="<?php echo DIR; ?>subpage">
 	<?php echo Language::show('open_subpage', 'Welcome'); ?>
 </a>

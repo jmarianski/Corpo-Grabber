@@ -12,6 +12,7 @@ namespace Controllers;
 
 use Core\Controller;
 use Core\View;
+use Modules\Page_Downloader;
 
 /**
  * Sample controller showing a construct and 2 methods and their typical usage.
@@ -34,7 +35,7 @@ class Index extends Controller
     {
         $data['title'] = $this->language->get('welcome_text');
         $data['welcome_message'] = $this->language->get('welcome_message');
-
+		$data['test'] = strip_tags(Page_Downloader::download1('https://en.wikipedia.org/wiki/Physical_test'));
         View::renderTemplate('header', $data);
         View::render('welcome/welcome', $data);
         View::renderTemplate('footer', $data);
