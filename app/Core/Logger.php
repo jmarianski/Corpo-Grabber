@@ -22,7 +22,7 @@ class Logger
      *
      * @var bool
      */
-    private static $printError = false;
+    private static $printError = true;
 
     /**
      * Determins if error should be emailed to SITEEMAIL defined in app/Core/Config.php.
