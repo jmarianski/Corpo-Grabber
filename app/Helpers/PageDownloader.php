@@ -9,23 +9,7 @@ class PageDownloader {
 	function __construct(){}
 	private static $taggs;
 	
-	public function download1($path, $redirects = 5) {
-		/*
-		$ch = curl_init();
-		$timeout = 1;
-		curl_setopt($ch, CURLOPT_URL, $path);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-		if($redirects>0) {
-			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); 
-			curl_setopt($ch, CURLOPT_MAXREDIRS, $redirects);
-		}
-		curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANYSAFE);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		$data = curl_exec($ch);
-		curl_close($ch);
-		return $data;
-		*/
+	public function download1($path) {
 		$dom = new Dom();
 		$options = [
         'whitespaceTextNode' => true,

@@ -37,6 +37,9 @@ $hooks = Hooks::get();
 <?php
 //hook for running code after body tag
 $hooks->run('afterBody');
-?>
 
-<div class="container">
+?>
+<div class="header">
+<a class="btn btn-md btn-success" href="/corpo-grabber/">Index</a>
+<a class="btn btn-md btn-success" href="/corpo-grabber/subpage">Subpage</a>
+</div><div class="container">
