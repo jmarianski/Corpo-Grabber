@@ -36,8 +36,8 @@ class Index extends Controller
     {
         $data['title'] = $this->language->get('welcome_text');
         $data['welcome_message'] = $this->language->get('welcome_message');
-		$data['test'] = PageDownloader::getText(
-		PageDownloader::download1('http://wyborcza.pl/duzyformat/1,151085,19774154,dzieci-bezdomne-w-polsce-cale-zycie-w-schronisku.html'));
+		if(strlen($_GET['page'])>0)
+			$data['test'] = PageDownloader::getText(PageDownloader::download1($_GET['page']));
         View::renderTemplate('header', $data);
         View::render('welcome/welcome', $data);
         View::renderTemplate('footer', $data);

@@ -19,7 +19,7 @@ $hooks = Hooks::get();
     //hook for plugging in meta tags
     $hooks->run('meta');
     ?>
-	<title><?php echo $data['title'].' - '.SITETITLE; //SITETITLE defined in app/Core/Config.php ?></title>
+	<title><?=$data['title']?></title>
 
 	<!-- CSS -->
 	<?php
@@ -39,7 +39,10 @@ $hooks = Hooks::get();
 $hooks->run('afterBody');
 
 ?>
-<div class="header">
+<div align="center" class="header">
+<form method=get action="/corpo-grabber/">
 <a class="btn btn-md btn-success" href="/corpo-grabber/">Index</a>
+<input name=page value="http://google.com">
 <a class="btn btn-md btn-success" href="/corpo-grabber/subpage">Subpage</a>
+</form>
 </div><div class="container">
