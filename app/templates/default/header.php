@@ -24,8 +24,7 @@ $hooks = Hooks::get();
 	<!-- CSS -->
 	<?php
     Assets::css([
-        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
-        Url::templatePath().'css/style.css',
+        Url::templatePath().'css/style.css'
     ]);
 
     //hook for plugging in css
@@ -39,10 +38,18 @@ $hooks = Hooks::get();
 $hooks->run('afterBody');
 
 ?>
-<div align="center" class="header">
-<form method=get action="/corpo-grabber/">
-<a class="btn btn-md btn-success" href="/corpo-grabber/">Index</a>
-<input name=page value="http://google.com">
-<a class="btn btn-md btn-success" href="/corpo-grabber/subpage">Subpage</a>
+<div style="background:#ccccdd" align="center" class="header">
+<table class="header">
+<tr>
+<td>
+<a href="/corpo-grabber/">Index</a></td>
+<td>
+<form method=get action="/corpo-grabber/show">
+<input style="display:table-cell; width:100%" name=page value="<?=strlen($_GET['page'])>0?$_GET['page']:"http://google.com"?>">
 </form>
+</td><td>
+<a href="/corpo-grabber/subpage">Subpage</a>
+</td>
+</tr>
+</table>
 </div><div class="container">

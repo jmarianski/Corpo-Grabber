@@ -15,6 +15,7 @@ use Helpers\Hooks;
 /* Define routes. */
 Router::any('', 'Controllers\Index@index');
 Router::any('subpage', 'Controllers\Index@subpage');
+Router::any('show', 'Controllers\Index@show');
 
 /* Module routes. */
 $hooks = Hooks::get();

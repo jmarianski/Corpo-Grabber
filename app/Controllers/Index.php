@@ -42,6 +42,24 @@ class Index extends Controller
         View::render('welcome/welcome', $data);
         View::renderTemplate('footer', $data);
     }
+	
+    public function show()
+    {
+        $data['title'] = "Adres: ".$_GET['page'];
+		if(strlen($_GET['page'])>0) {
+			$page = PageDownloader::download1($_GET['page']);
+			// $data['page'] = PageDownloader::getText($page));
+			$data['chunks'] = PageDownloader::getChunks($page);
+			$data['page'] = "";
+			foreach($data['chunks'] as $chunk) {
+				$data['page'] .= "<div class=\"chunk\">".$chunk."</div>
+				";
+			}
+		}
+        View::renderTemplate('header', $data);
+        View::render('main/show', $data);
+        View::renderTemplate('footer', $data);
+    }
 
     /**
      * Define Subpage page title and load template files.

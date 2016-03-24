@@ -7,7 +7,6 @@ use PHPHtmlParser\Dom;
 class PageDownloader {
 	
 	function __construct(){}
-	private static $taggs;
 	
 	public function download1($path) {
 		$dom = new Dom();
@@ -45,9 +44,8 @@ class PageDownloader {
 		return $array;
 	}
 	
-	
 	private function getChunksHelper($data) {
-		$tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span");
+		$tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
 		$array = array();
 		if($data->hasChildren()) {
 			if(count($data->getChildren())>0) {
@@ -60,8 +58,6 @@ class PageDownloader {
 								$t = strtolower($c->getTag()->name());
 								if($t==$tag)
 									$var2 = true;
-								if(!in_array($t, $this->taggs))
-									$this->taggs[] = $t;
 							}
 							if(!$var2) {
 								$var = false;
