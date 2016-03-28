@@ -51,9 +51,11 @@ class Language
      *
      * @return string
      */
-    public function get($value)
+    public function get($value = NULL)
     {
-        if (!empty($this->array[$value])) {
+		if($value==null)
+			return $this->array;
+        else if (!empty($this->array[$value])) {
             return $this->array[$value];
         } else {
             return $value;

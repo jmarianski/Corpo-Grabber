@@ -39,7 +39,7 @@ class Index extends Controller
 		if(strlen($_GET['page'])>0)
 			$data['test'] = PageDownloader::getText(PageDownloader::download1($_GET['page']));
         View::renderTemplate('header', $data);
-        View::render('welcome/welcome', $data);
+        View::render('main/index', $data);
         View::renderTemplate('footer', $data);
     }
 	
