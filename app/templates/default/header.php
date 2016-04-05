@@ -26,11 +26,20 @@ $hooks = Hooks::get();
     Assets::css([
         Url::templatePath().'css/style.css'
     ]);
+	
+	Assets::js([
+		'https://code.jquery.com/jquery-1.12.3.min.js',
+		'//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js',
+	]);
+
+
 
     //hook for plugging in css
     $hooks->run('css');
+	
+	//hook for plugging in javascript
+	$hooks->run('js');
     ?>
-
 </head>
 <body>
 <?php
