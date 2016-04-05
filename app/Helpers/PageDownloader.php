@@ -23,28 +23,16 @@ class PageDownloader {
 		return $dom->root->innerHTML();
 	}
 	
-	public function getText($data) {
-		
-		$this->taggs = array();
-		$dom = new Dom;
-		$dom->load($data);
-		$array = self::getChunks($data);
-		$text;
-		foreach($array as $a)
-			$text .= "<p>"
-			.$a."</p>";
-		return $text;
-	}
-	
-	public function getChunks($data) {
+	public function getChunks($data, $numWords = 0, $depth = 0) {
 		$array = array();
 		$dom = new Dom;
 		$dom->load($data);
-		$array = self::getChunksHelper($dom->root);
+		$array = self::getChunksHelper($dom->root, $numWords, $depth);
 		return $array;
 	}
 	
-	private function getChunksHelper($data) {
+	private function getChunksHelper($data, $numWords, $depth) {
+		// allowable tags
 		$tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
 		$array = array();
 		if($data->hasChildren()) {
@@ -64,13 +52,13 @@ class PageDownloader {
 							}
 						}
 						if(!$var && count($children)>0) {
-							$a = self::getChunksHelper($child);
+							$a = self::getChunksHelper($child, $numWords, $depth);
 							if(count($a)>0)
 								$array = array_merge($array, $a);
 						}
 						else {
 							$string = trim(strip_tags($child->innerHTML()));
-							if(strlen($string)>0)
+							if(str_word_count($string)>=$numWords && strlen($string)>0)
 								$array[] = $string;
 						}
 					}
