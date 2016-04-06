@@ -37,7 +37,9 @@ use Core\Language;
 	<button id="submit">Send request</button>
 </td>
 </tr>
-</table>
+</table><?
+if(strlen($data['url'])>1) {
+	?>
 <script>
 $(document).ready(function(){
 	var sendRequest = function(){
@@ -52,3 +54,5 @@ $(document).ready(function(){
 	sendRequest();
 });
 </script>
+<? 
+}

@@ -12,7 +12,7 @@ $hooks = Hooks::get();
 
 </div>
 
-<!-- JS -->
+<!-- Footer -->
 <?php
 
 //hook for plugging in code into the footer
