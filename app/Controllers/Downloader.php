@@ -40,11 +40,31 @@ class Downloader extends Controller
 		return $file;
 	}
 	
-	public function page() {
+	public function preview() {
 		echo self::getPage($_POST['url'], $_POST['num_words'], $_POST['depth']);
 	}
 	
+	public function download() {			
+		$page = PageDownloader::download1($_GET['page']);
+		$file = self::getFileName($_GET['page']);
+		file_put_contents($file, $page);
+		echo $file;
+	}
+	
     public function show()
+    {
+        $data['title'] = "Adres: ".$_GET['page'];
+		if(strlen($_GET['page'])>0) {
+			$page = PageDownloader::download1($_GET['page']);
+			file_put_contents(self::getFileName($_GET['page']), $page);
+			$data['url'] = stripslashes($_GET['page']);
+		}
+        View::renderTemplate('header', $data);
+        View::render('main/show', $data);
+        View::renderTemplate('footer', $data);
+    }
+	
+    public function download_multiple()
     {
         $data['title'] = "Adres: ".$_GET['page'];
 		if(strlen($_GET['page'])>0) {

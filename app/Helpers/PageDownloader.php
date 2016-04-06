@@ -11,7 +11,7 @@ class PageDownloader {
 	public function download1($path) {
 		$dom = new Dom();
 		$options = [
-        'whitespaceTextNode' => true,
+        'whitespaceTextNode' => false,
         'strict'             => false,
         'enforceEncoding'    => "utf-8",
         'cleanupInput'       => true,

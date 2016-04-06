@@ -53,11 +53,11 @@ $hooks->run('afterBody');
 <td>
 <a href="/corpo-grabber/">Index</a></td>
 <td>
-<form method=get action="/corpo-grabber/show">
+<form method=get action="/corpo-grabber/download/single">
 <input style="display:table-cell; width:100%" name=page value="<?=strlen($_GET['page'])>0?$_GET['page']:"http://google.com"?>">
 </form>
 </td><td>
-<a href="/corpo-grabber/subpage">Subpage</a>
+<a href="/corpo-grabber/download/multiple">Advanced download</a>
 </td>
 </tr>
 </table>
