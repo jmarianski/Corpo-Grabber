@@ -35,6 +35,10 @@ class Curl implements CurlInterface
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
         $content = curl_exec($ch);
+        $errorcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        // let's return error code instead of content for 
+        if($errorcode!="200")
+            return $errorcode;
         if ($content === false) {
             // there was a problem
             $error = curl_error($ch);

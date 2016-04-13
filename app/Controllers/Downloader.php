@@ -6,6 +6,7 @@ use Core\Controller;
 use Core\View;
 use Helpers\PageDownloader;
 use Modules;
+use PHPHtmlParser\Dom;
 
 /**
  * Sample controller showing a construct and 2 methods and their typical usage.
@@ -45,11 +46,20 @@ class Downloader extends Controller
 	}
 	
 	public function download() {			
-		$page = PageDownloader::download1($_GET['page']);
-		$file = self::getFileName($_GET['page']);
+		$page = PageDownloader::download1($_POST['url']);
+                if(strlen($page)==3) {
+                    echo $page;
+                    return;
+                }
+		$file = self::getFileName($_POST['url']);
 		file_put_contents($file, $page);
-		echo $file;
-	}
+                $dom = new Dom();
+                $dom->loadStr($page, []);
+                $a = $dom->getElementsByTag("a");
+                foreach($a as $url) {
+                    echo $url->getTag()->getAttribute("href")['value']."\n";
+                }
+	} 
 	
     public function show()
     {
@@ -66,14 +76,9 @@ class Downloader extends Controller
 	
     public function download_multiple()
     {
-        $data['title'] = "Adres: ".$_GET['page'];
-		if(strlen($_GET['page'])>0) {
-			$page = PageDownloader::download1($_GET['page']);
-			file_put_contents(self::getFileName($_GET['page']), $page);
-			$data['url'] = stripslashes($_GET['page']);
-		}
+        $data['title'] = "Pobieranie zaawansowane";
         View::renderTemplate('header', $data);
-        View::render('main/show', $data);
+        View::render('main/download', $data);
         View::renderTemplate('footer', $data);
     }
 
