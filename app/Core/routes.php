@@ -17,6 +17,7 @@ Router::any('', 'Controllers\Index@index');
 Router::any('subpage', 'Controllers\Index@subpage');
 Router::any('download/single', 'Controllers\Downloader@show');
 Router::any('download/preview', 'Controllers\Downloader@preview');
+Router::any('download/load', 'Controllers\Downloader@load_project');
 Router::any('download/download', 'Controllers\Downloader@download');
 Router::any('download/multiple', 'Controllers\Downloader@download_multiple');
 

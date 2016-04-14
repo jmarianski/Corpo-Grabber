@@ -81,5 +81,12 @@ class Downloader extends Controller
         View::render('main/download', $data);
         View::renderTemplate('footer', $data);
     }
+	
+	public function load_project() {
+        $data['title'] = "Pobieranie zaawansowane";
+        View::renderTemplate('header', $data);
+        View::render('main/load', $data);
+        View::renderTemplate('footer', $data);
+	}
 
 }
