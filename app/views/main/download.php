@@ -61,28 +61,45 @@ use Core\Language;
     var pagesdownloaded = 0;
     var pagelimit = $("#pagelimit").val();
     var url1 = "/corpo-grabber/download/download";
+    var urls_extracted = [];
+    var urls_attempted = [];
     var prefix = "";
+    var running_downloads = [];
     var step1 = function() {
         var url = $("#url").val();
         prefix = $("#prefix").val();
         pagelimit = $("#pagelimit").val();
         postAjax(url);
     };
-    var step1loop = function(data, status) {
-        if(data.length>3) {
-            pagesdownloaded++;
-            if(pagesdownloaded<pagelimit) {
-                var urls = data.split("\n");
-                for(var i=0; i<urls.length; i++) {
-                    postAjax(urls[i]);
-            $("#licznik").html(data);
+    
+    var step1loop = function(url) {
+        var step1loop2 = function(data, status) {
+            var index = running_downloads.indexOf(url);
+            if(index>-1)
+                running_downloads.splice(index, 1);
+            $("#licznik").html(running_downloads.join("<br>"));
+            if(data.length>3) {
+                pagesdownloaded++;
+                if(pagesdownloaded<pagelimit) {
+                    var urls = data.split("\n");
+                    urls_extracted = urls_extracted.concat(urls);
+                    for(var i=0; i<urls.length && 
+                            running_downloads.length+pagesdownloaded<=pagelimit; i++) {
+                        urls[i] = urls[i].substring(0, urls[i].indexOf("#"));
+                        if(urls_attempted.indexOf(urls[i]) < 0 && (urls[i].lastIndexOf(prefix, 0) === 0 || prefix===""))
+                            postAjax(urls[i]);
+                    }
                 }
             }
-        }
+        };
+        return step1loop2;
     };
     
     var postAjax = function(url) {
-        $.post(url1, {"url":url, "prefix":prefix}, step1loop);
+        running_downloads.push(url);
+        urls_attempted.push(url);
+        $("#licznik").html(running_downloads.join("<br>"));
+        $.post(url1, {"url":url, "prefix":prefix}, step1loop(url));
     };
     var sendRequest = function(){
         $("#page-example").html("Loading...");

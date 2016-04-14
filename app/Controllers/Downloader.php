@@ -44,6 +44,16 @@ class Downloader extends Controller
 	public function preview() {
 		echo self::getPage($_POST['url'], $_POST['num_words'], $_POST['depth']);
 	}
+        
+        public function download_httrack() {
+            $URL = $_POST['url'];
+            $path = "tmp";
+            $exec_time = $_POST['exec_time'];
+            if($exec_time==0)
+                $exec_time = 10;
+            if(strlen($URL)>0 && strrpos($URL, " ")===false)
+                echo exec("httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O $path -N1 -D \"$URL\"");
+        }
 	
 	public function download() {			
 		$page = PageDownloader::download1($_POST['url']);
@@ -52,7 +62,8 @@ class Downloader extends Controller
                     return;
                 }
 		$file = self::getFileName($_POST['url']);
-		file_put_contents($file, $page);
+                if(self::startsWith($_POST['url'], $_POST['prefix']))
+                    file_put_contents($file, $page);
                 $dom = new Dom();
                 $dom->loadStr($page, []);
                 $a = $dom->getElementsByTag("a");
@@ -60,6 +71,10 @@ class Downloader extends Controller
                     echo $url->getTag()->getAttribute("href")['value']."\n";
                 }
 	} 
+        
+       private function startsWith($haystack, $needle) {
+            return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== false;
+        }
 	
     public function show()
     {
