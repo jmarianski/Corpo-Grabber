@@ -65,7 +65,7 @@ use Core\Language;
     var rest = data.substr(data.indexOf("<BR>")+4);
         $("#Log").html("Zapisano w " + firstLine+"<BR>"
         +"Poniżej znajdują się logi programu httrack<BR>"+rest
-        +"<form method=POST action=\"/corpo-grabber/download/load\"><input type=hidden name=url value=\""+firstLine+"\"><input type=submit value=\"Idź do edycji\"></form>");
+        +"<form method=POST action=\"load\"><input type=hidden name=url value=\""+firstLine+"\"><input type=submit value=\"Idź do edycji\"></form>");
         clearInterval(countdown);
     };
     $("#submit-step1").click(step1);

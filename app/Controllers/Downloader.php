@@ -56,13 +56,14 @@ class Downloader extends Controller
 	}
         
         public function download_httrack() {
+            ini_set('max_execution_time', 1300);
             $URL = $_POST['url'];
             $path_local = ((($_POST['path']==""))?(date("Y-m-d")." ".self::removeCharacters($URL)):$_POST['path']);
-            $path = "tmp/".$path_localh;
+            $path = "tmp/".$path_local;
             $exec_time = $_POST['exec_time'];
             if($exec_time==0)
                 $exec_time = 10;
-            if(strlen($URL)>0 && strrpos($URL, " ")===false) {
+            if(strlen($URL)>0 && strrpos($URL, " ")===false && $exec_time<1000) {
                 $cmd = "httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O \"$path\" -N1 -D \"$URL\"";
                 exec($cmd." 2>&1", $string);
                 echo $path_local.'<BR>';
@@ -70,7 +71,7 @@ class Downloader extends Controller
                     echo $s."<BR>";
             }
             else
-                echo "error with params, ".$URL.", ".$exec_time;
+                echo "error with params, URL: ".$URL.", exec_time = ".$exec_time."<1000";
         }
 	
 	public function download() {			
@@ -116,7 +117,9 @@ class Downloader extends Controller
     }
 	
 	public function load_project() {
-        $data['title'] = "Pobieranie zaawansowane";
+        $data['title'] = "Edytuj wzorzec";
+        $data['projects'] = glob("tmp/*", GLOB_ONLYDIR);
+        
         View::renderTemplate('header', $data);
         View::render('main/load', $data);
         View::renderTemplate('footer', $data);
