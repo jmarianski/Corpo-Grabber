@@ -39,10 +39,16 @@ class Downloader extends Controller
 		return $file;
 	}
         
-        private function removeCharacters($string) {
-                $file = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $string);
-		$file = mb_ereg_replace("([\.]{2,})", '', $file);
-                return $file;
+        public static function removeCharacters($string) {
+            $pos = strrpos($string, "http://");
+            if($pos==0)
+                $pos = 7;
+            else
+                $pos = 0;
+            $file = substr($string, $pos);
+            $file = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $file);
+            $file = mb_ereg_replace("([\.]{2,})", '', $file);
+            return $file;
         }
 	
 	public function preview() {
@@ -51,16 +57,17 @@ class Downloader extends Controller
         
         public function download_httrack() {
             $URL = $_POST['url'];
-            $path = "tmp/".((is_null($_POST['path']))?self::removeCharacters($URL):$_POST['path']);
+            $path_local = ((($_POST['path']==""))?(date("Y-m-d")." ".self::removeCharacters($URL)):$_POST['path']);
+            $path = "tmp/".$path_localh;
             $exec_time = $_POST['exec_time'];
             if($exec_time==0)
                 $exec_time = 10;
             if(strlen($URL)>0 && strrpos($URL, " ")===false) {
-                $cmd = "httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O $path -N1 -D \"$URL\"";
+                $cmd = "httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O \"$path\" -N1 -D \"$URL\"";
                 exec($cmd." 2>&1", $string);
+                echo $path_local.'<BR>';
                 foreach($string as $s)
                     echo $s."<BR>";
-                echo $path;
             }
             else
                 echo "error with params, ".$URL.", ".$exec_time;
