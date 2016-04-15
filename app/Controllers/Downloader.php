@@ -34,12 +34,16 @@ class Downloader extends Controller
 	}
 	
 	private function getFileName($url) {
-		$file = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $url);
-		// Remove any runs of periods (thanks falstro!)
-		$file = mb_ereg_replace("([\.]{2,})", '', $file);
+		$file = self::removeCharacters($url);
 		$file = "tmp/".$file.".html";
 		return $file;
 	}
+        
+        private function removeCharacters($string) {
+                $file = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $string);
+		$file = mb_ereg_replace("([\.]{2,})", '', $file);
+                return $file;
+        }
 	
 	public function preview() {
 		echo self::getPage($_POST['url'], $_POST['num_words'], $_POST['depth']);
@@ -47,12 +51,19 @@ class Downloader extends Controller
         
         public function download_httrack() {
             $URL = $_POST['url'];
-            $path = "tmp";
+            $path = "tmp/".((is_null($_POST['path']))?self::removeCharacters($URL):$_POST['path']);
             $exec_time = $_POST['exec_time'];
             if($exec_time==0)
                 $exec_time = 10;
-            if(strlen($URL)>0 && strrpos($URL, " ")===false)
-                echo exec("httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O $path -N1 -D \"$URL\"");
+            if(strlen($URL)>0 && strrpos($URL, " ")===false) {
+                $cmd = "httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O $path -N1 -D \"$URL\"";
+                exec($cmd." 2>&1", $string);
+                foreach($string as $s)
+                    echo $s."<BR>";
+                echo $path;
+            }
+            else
+                echo "error with params, ".$URL.", ".$exec_time;
         }
 	
 	public function download() {			
