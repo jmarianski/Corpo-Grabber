@@ -97,5 +97,13 @@ use Core\Language;
             }
         });
     };
+    
+    var loadSkeleton = function() {
+        
+    };
+    var loadSkeleton = function() {
+        
+    };
+    
     $("#submit_load").click(loadFiles);
 </script>

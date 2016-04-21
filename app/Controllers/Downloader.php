@@ -136,11 +136,15 @@ class Downloader extends Controller
                         $array = scandir($project);
                         if($array!==false) {
                             foreach($array as $file) {
-								if(!is_dir($project."/".$file))
-									$html .= $file."<BR>";
+                                $p = $project."/".$file;
+				if(!is_dir($p) && (pathinfo($p, PATHINFO_EXTENSION)=="html" 
+                                        || pathinfo($p, PATHINFO_EXTENSION)=="htm"))
+                                    $html .= $file."<BR>";
                             }
                         }
                         else
+                            echo 'error';
+                        if($html==="")
                             echo 'error';
                         echo $html;
                     }

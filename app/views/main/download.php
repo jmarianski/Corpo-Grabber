@@ -36,14 +36,15 @@ use Core\Language;
     var counter = 0;
     var date = new Date();
     var countdown;
+    var exec_time;
     var step1 = function() {
         var url = $("#url").val();
         postAjax(url);
     };
     var postAjax = function(url) {
-        var exec_time = $("#exec_time").val();
+        exec_time = $("#exec_time").val();
         var path = $("#path").val();
-        $("#Log").html("Loading...");
+        $("#Log").html("Ładowanie...");
         $.post(url1, {"url":url, "exec_time":exec_time, "path":path}, doAfterDownload);
         timer();
     }; 
@@ -53,6 +54,8 @@ use Core\Language;
         $("#Licznik").html("Czas: 0");
             countdown = setInterval(function() {
                 counter = counter + 1;
+                if(exec_time<counter)
+                    $("#Log").html("Przetwarzanie...");
                 $("#Licznik").html("Czas: " + counter);
             }, 1000);
     }; 
