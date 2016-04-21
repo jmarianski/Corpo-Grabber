@@ -101,7 +101,7 @@ use Core\Language;
     var loadSkeleton = function() {
         
     };
-    var loadSkeleton = function() {
+    var loadPreview = function() {
         
     };
     
