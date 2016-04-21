@@ -21,6 +21,7 @@ Router::any('download/load', 'Controllers\Downloader@load_project');
 Router::any('download/download', 'Controllers\Downloader@download');
 Router::any('download/download_httrack', 'Controllers\Downloader@download_httrack');
 Router::any('download/multiple', 'Controllers\Downloader@download_multiple');
+Router::any('download/project', 'Controllers\Downloader@project');
 
 /* Module routes. */
 $hooks = Hooks::get();

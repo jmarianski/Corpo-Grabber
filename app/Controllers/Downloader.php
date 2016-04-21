@@ -117,12 +117,45 @@ class Downloader extends Controller
     }
 	
 	public function load_project() {
-        $data['title'] = "Edytuj wzorzec";
+        $data['title'] = "Utwórz wzorzec";
         $data['projects'] = glob("tmp/*", GLOB_ONLYDIR);
         
         View::renderTemplate('header', $data);
         View::render('main/load', $data);
         View::renderTemplate('footer', $data);
 	}
+        
+        public function project() {
+            $mode = $_POST['mode'];
+            $path = $_POST['path'];
+            switch($mode) {
+                case "files":
+                    $project = $_POST['project'];
+                    $html = "";
+                    if(file_exists($project)) {
+                        $array = scandir($project);
+                        if($array!==false) {
+                            foreach($array as $file) {
+                                $html .= $file."<BR>";
+                            }
+                        }
+                        else
+                            echo 'error';
+                        echo $html;
+                    }
+                    else
+                        echo 'error';
+                    break;
+                case "loadSkeleton":
+                    // do stuff
+                    break;
+                case "loadPreview":
+                    // do stuff
+                    break;
+                    
+            }
+        }
+        
+        
 
 }
