@@ -161,7 +161,26 @@ class Downloader extends Controller
             $path = utf8_decode($_POST['path']);
             switch($mode) {
                 case "files":
-                    $project = utf8_decode($_POST['project']);
+                    self::getFiles($_POST['project']);
+                    break;
+                case "loadSkeleton":
+                    // do stuff
+                    self::loadSkeleton($path);
+                    break;
+                case "loadPreview":
+                    if(!is_dir($path) && (pathinfo($path, PATHINFO_EXTENSION)=="html" 
+                                        || pathinfo($path, PATHINFO_EXTENSION)=="htm"))
+                            echo file_get_contents($path);
+                        else {
+                            echo "error";
+                        }
+                    break;
+                    
+            }
+        }
+        
+        private function getFiles($project) {
+                    $project = utf8_decode($project);
                     $html = "";
                     if(file_exists($project)) {
                         $array = scandir($project);
@@ -181,22 +200,10 @@ class Downloader extends Controller
                     }
                     else
                         echo 'error';
-                    break;
-                case "loadSkeleton":
-                    // do stuff
-                    break;
-                case "loadPreview":
-                    if(!is_dir($path) && (pathinfo($path, PATHINFO_EXTENSION)=="html" 
-                                        || pathinfo($path, PATHINFO_EXTENSION)=="htm"))
-                            echo file_get_contents($path);
-                        else {
-                            echo "error";
-                        }
-                    break;
-                    
-            }
         }
         
-        
+        private function loadSkeleton($path) {
+            
+        }
 
 }

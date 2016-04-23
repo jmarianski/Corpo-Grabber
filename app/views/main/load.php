@@ -131,6 +131,12 @@ use Core\Language;
         });
     };
     
+    $("#subsite").change(function() {
+        $("#preview_button").html("Podgląd");
+        $("#preview_button").unbind("click");
+        $("#preview_button").click(loadPreview);
+    });
+    
     var hidePrev = function() {
         $("#preview").html(" ");
         $("#preview_button").html("Podgląd");
