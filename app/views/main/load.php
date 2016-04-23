@@ -5,7 +5,7 @@
 use Core\Language;
 
 ?>
-<table class="content">
+<table class="content"  style="padding: 5px">
 <tr>
 <td>
 <div class="page-header">
@@ -42,15 +42,17 @@ use Core\Language;
                     <button id="preview_button"  style="width: 100%" >Podgląd</button>
 		</td>
 	</tr>
-	<tr>
-		<td colspan=3 style="text-align:center; visibility: collapse" id="button_load">
+	<tr style="text-align:center; visibility: collapse" id="button_load">
+		<td colspan=3>
 			<button id="load_tree">Wczytaj drzewo strony</button>
 		</td>
 	</tr>
 </table>
-<div id="preview">
-</div>
-<div id="skeleton">
+<div id="contents" style="overflow:scroll">
+    <div id="preview">
+    </div>
+    <div id="skeleton">
+    </div>
 </div>
 </div>
 </td>
@@ -77,82 +79,4 @@ use Core\Language;
 </td>
 </tr>
 </table>
-<script>
-    var url1 = "/corpo-grabber/download/project";
-    var project;
-    var loadFiles = function() {
-        project = $("#project").val();
-        project += "/web/";
-        var select = document.getElementById("subsite");
-        $("#subsite").empty();
-        $.post(url1, {"project":project, "mode":"files"}, function(data, status) {
-            if(data!=="error") {
-                var array = data.split("<BR>");
-                for(var i=0; i<array.length; i++) {
-                       var opt = document.createElement("option");
-                       opt.value= project+array[i];
-                       opt.innerHTML = array[i];
-                       select.appendChild(opt);
-                }
-                document.getElementById("load-preview").style.visibility = "visible";
-                document.getElementById("button_load").style.visibility = "visible";
-                $("#preview").html(" ");
-            }
-            else {
-                $("#preview").html("Błąd: projekt nie zawiera stron internetowych. \n\
-                Prawdopodobnie strona ta nie została pobrana poprawnie.");
-                document.getElementById("load-preview").style.visibility = "collapse";
-                document.getElementById("button_load").style.visibility = "collapse";
-            }
-        });
-    };
-    
-    var loadSkeleton = function() {
-        path = $("#subsite").val();
-        $.post(url1, {"path":path, "mode":"loadSkeleton"}, function(data, status) {
-            if(data!="error") {
-                $("#skeleton").html(data);
-            }
-            else
-                $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
-                
-        });
-    };
-    var loadPreview = function() {
-        path = $("#subsite").val();
-        $.post(url1, {"path":path, "mode":"loadPreview"}, function(data, status) {
-            if(data!="error") {
-                	var $frame = $('<iframe style="width:100%; height:500px;">');
-			$('#preview').html( $frame );
-			setTimeout( function() {
-				var doc = $frame[0].contentWindow.document;
-				var $body = $('body',doc);
-				$body.html(data);
-			}, 1 );
-                $("#preview_button").html("Schowaj");
-                $("#preview_button").unbind("click");
-                $("#preview_button").click(hidePrev);
-            }
-            else
-                $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
-                
-        });
-    };
-    
-    $("#subsite").change(function() {
-        $("#preview_button").html("Podgląd");
-        $("#preview_button").unbind("click");
-        $("#preview_button").click(loadPreview);
-    });
-    
-    var hidePrev = function() {
-        $("#preview").html(" ");
-        $("#preview_button").html("Podgląd");
-        $("#preview_button").unbind("click");
-        $("#preview_button").click(loadPreview);
-    };
-    
-    $("#submit_load").click(loadFiles);
-    $("#preview_button").click(loadPreview);
-    $("#load_tree").click(loadSkeleton);
-</script>
+<script src="/corpo-grabber/app/templates/default/js/load.js" type="text/javascript"></script>
