@@ -30,7 +30,7 @@ var loadFiles = function() {
 };
 
 var loadSkeleton = function() {
-    path = $("#subsite").val();
+    var path = $("#subsite").val();
     $.post(url1, {"path":path, "mode":"loadSkeleton"}, function(data, status) {
         if(data!="error") {
             $("#skeleton").html(data);
@@ -53,7 +53,6 @@ var loadPreview = function() {
                             var doc = $frame[0].contentWindow.document;
                             var $body = $('body',doc);
                             $body.html(data);
-                            $frame[0].wrap("<center></center>");
                     }, 1 );
             $("#preview_button").html("Schowaj");
             $("#preview_button").unbind("click");
@@ -80,7 +79,7 @@ var hidePrev = function() {
     setSize();
 };
 var setSize = function() {
-    tmpHeight = $(window).height() - $("#contents").offset().top;
+    var tmpHeight = $(window).height() - $("#contents").offset().top;
     $('#contents').css('height',tmpHeight+"px");
 };
 
@@ -88,19 +87,24 @@ $("#submit_load").click(loadFiles);
 $("#preview_button").click(loadPreview);
 $("#load_tree").click(loadSkeleton);
 
-var select_branch = function(divider) {
+var select_branch = function(s) {
+    change_color_on_select(s);
+};
+
+var change_color_on_select = function(s) {
+    var s_color = '#99ff88';
     if(selected==0) {
-        selected = divider.id;
-        divider.style.background = '#00ff00';
+        selected = s.id;
+        s.style.background = s_color;
     }
-    else if(selected==divider.id) {
-        divider.style.background = null;
+    else if(selected==s.id) {
+        s.style.background = null;
         selected = 0;
     }
     else {
         document.getElementById(selected).style.background = null;
-        selected = divider.id;
-        divider.style.background = '#00ff00';
+        selected = s.id;
+        s.style.background = s_color;
     }
 };
 
