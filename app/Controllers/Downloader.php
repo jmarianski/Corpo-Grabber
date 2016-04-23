@@ -63,15 +63,46 @@ class Downloader extends Controller
             $exec_time = $_POST['exec_time'];
             if($exec_time==0)
                 $exec_time = 10;
-            if(strlen($URL)>0 && strrpos($URL, " ")===false && $exec_time<1000) {
+            if(strlen($URL)>0 && strrpos($URL, " ")===false && $exec_time<300) {
                 $cmd = "httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O \"$path\" -N1 -D \"$URL\"";
                 exec($cmd." 2>&1", $string);
+                self::checkHashes($path."/web/");
+                self::removeScripts($path."/web/");
                 echo $path_local.'<BR>';
                 foreach($string as $s)
                     echo $s."<BR>";
             }
             else
-                echo "error with params, URL: ".$URL.", exec_time = ".$exec_time."<1000";
+                echo "error with params, URL: ".$URL.", exec_time = ".$exec_time." (< 300)";
+        }
+        
+        private function checkHashes($path) {
+            $array = scandir($path);
+            $hashes = array();
+            foreach($array as $file) {
+                $file = $path.$file;
+                if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
+                                        || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
+                    $hash = hash_file("md5", $file);
+                    if(in_array($hash, $hashes))
+                        unlink ($file);
+                    else
+                        $hashes[] = $hash;
+                }
+            }
+        }
+        private function removeScripts($path) {
+            // will remove scripts from html to present data without scripts
+            $array = scandir($path);
+            foreach($array as $file) {
+                $file = $path.$file;
+                if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
+                                        || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
+                    $dom = new Dom();
+                    $dom->loadFromFile($file, []);
+                    file_put_contents($file, $dom->root->innerHTML());
+                }
+            }
         }
 	
 	public function download() {			
@@ -127,10 +158,10 @@ class Downloader extends Controller
         
         public function project() {
             $mode = $_POST['mode'];
-            $path = $_POST['path'];
+            $path = utf8_decode($_POST['path']);
             switch($mode) {
                 case "files":
-                    $project = $_POST['project'];
+                    $project = utf8_decode($_POST['project']);
                     $html = "";
                     if(file_exists($project)) {
                         $array = scandir($project);
@@ -139,7 +170,7 @@ class Downloader extends Controller
                                 $p = $project."/".$file;
 				if(!is_dir($p) && (pathinfo($p, PATHINFO_EXTENSION)=="html" 
                                         || pathinfo($p, PATHINFO_EXTENSION)=="htm"))
-                                    $html .= $file."<BR>";
+                                    $html .= utf8_encode($file)."<BR>";
                             }
                         }
                         else
@@ -155,7 +186,12 @@ class Downloader extends Controller
                     // do stuff
                     break;
                 case "loadPreview":
-                    // do stuff
+                    if(!is_dir($path) && (pathinfo($path, PATHINFO_EXTENSION)=="html" 
+                                        || pathinfo($path, PATHINFO_EXTENSION)=="htm"))
+                            echo file_get_contents($path);
+                        else {
+                            echo "error";
+                        }
                     break;
                     
             }

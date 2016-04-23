@@ -10,11 +10,11 @@ use Helpers\Url;
 $hooks = Hooks::get();
 ?>
 <!DOCTYPE html>
-<html lang="<?php echo LANGUAGE_CODE; ?>">
+<html lang="pl_PL">
 <head>
 
 	<!-- Site meta -->
-	<meta charset="utf-8">
+	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 	<?php
     //hook for plugging in meta tags
     $hooks->run('meta');

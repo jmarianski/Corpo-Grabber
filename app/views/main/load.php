@@ -17,14 +17,17 @@ use Core\Language;
 		<td width="40%">
 			Wczytaj projekt:
 		</td>
-		<td width="60%" colspan="2">
+		<td width="50%">
 			<select style="width: 100%" id="project"><?php
                           foreach($data['projects'] as $project) {
                               ?>
-				<option value="<?=$project?>"><?=substr($project, 4); //removing "tmp/" prefix?></option>
+                            <option value="<?=utf8_encode($project)?>"><?=  utf8_encode(substr($project, 4))?></option>
                                 <?php
                           }  
 			?></select>
+		</td>
+                <td>
+			<button  style="width: 100%" id="submit_load">Wczytaj</button>
 		</td>
 	</tr>
 	<tr id="load-preview" style="visibility: collapse">
@@ -36,16 +39,18 @@ use Core\Language;
                     </select>
 		</td>
 		<td width="10%">
-                    <button id="preview" width="100%">Podgląd</button>
+                    <button id="preview_button"  style="width: 100%" >Podgląd</button>
 		</td>
 	</tr>
 	<tr>
-		<td colspan=3 style="text-align:center">
-			<button id="submit_load">Wczytaj projekt</button>
+		<td colspan=3 style="text-align:center; visibility: collapse" id="button_load">
+			<button id="load_tree">Wczytaj drzewo strony</button>
 		</td>
 	</tr>
 </table>
-<div id="belowtable">
+<div id="preview">
+</div>
+<div id="skeleton">
 </div>
 </div>
 </td>
@@ -74,7 +79,7 @@ use Core\Language;
 </table>
 <script>
     var url1 = "/corpo-grabber/download/project";
-    
+    var project;
     var loadFiles = function() {
         project = $("#project").val();
         project += "/web/";
@@ -90,10 +95,14 @@ use Core\Language;
                        select.appendChild(opt);
                 }
                 document.getElementById("load-preview").style.visibility = "visible";
+                document.getElementById("button_load").style.visibility = "visible";
+                $("#preview").html(" ");
             }
             else {
-                alert("Błąd: projekt nie zawiera stron internetowych. Prawdopodobnie strona ta nie została pobrana poprawnie.");
+                $("#preview").html("Błąd: projekt nie zawiera stron internetowych. \n\
+                Prawdopodobnie strona ta nie została pobrana poprawnie.");
                 document.getElementById("load-preview").style.visibility = "collapse";
+                document.getElementById("button_load").style.visibility = "collapse";
             }
         });
     };
@@ -102,8 +111,34 @@ use Core\Language;
         
     };
     var loadPreview = function() {
-        
+        path = $("#subsite").val();
+        $.post(url1, {"path":path, "mode":"loadPreview"}, function(data, status) {
+            if(data!="error") {
+                	var $frame = $('<iframe style="width:100%; height:500px;">');
+			$('#preview').html( $frame );
+			setTimeout( function() {
+				var doc = $frame[0].contentWindow.document;
+				var $body = $('body',doc);
+				$body.html(data);
+			}, 1 );
+                $("#preview_button").html("Schowaj");
+                $("#preview_button").unbind("click");
+                $("#preview_button").click(hidePrev);
+            }
+            else
+                $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
+                
+        });
+    };
+    
+    var hidePrev = function() {
+        $("#preview").html(" ");
+        $("#preview_button").html("Podgląd");
+        $("#preview_button").unbind("click");
+        $("#preview_button").click(loadPreview);
     };
     
     $("#submit_load").click(loadFiles);
+    $("#preview_button").click(loadPreview);
+    $("#load_tree").click(loadSkeleton);
 </script>

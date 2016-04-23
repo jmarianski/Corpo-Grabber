@@ -157,7 +157,8 @@ abstract class AbstractNode
         $this->parent = $parent;
 
         // assign child to parent
-        $this->parent->addChild($this);
+		if(!$this->parent->isChild($this->id()))
+			$this->parent->addChild($this);
 
         //clear any cache
         $this->clear();
@@ -402,11 +403,10 @@ abstract class AbstractNode
      */
     public function isAncestor($id)
     {
-        if ( ! is_null($this->parent)) {
+        if ( ! is_null($this->parent) && $this->parent->id()!=$this->id()) {
             if ($this->parent->id() == $id) {
                 return true;
             }
-
             return $this->parent->isAncestor($id);
         }
 

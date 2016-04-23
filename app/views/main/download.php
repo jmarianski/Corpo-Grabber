@@ -55,7 +55,7 @@ use Core\Language;
             countdown = setInterval(function() {
                 counter = counter + 1;
                 if(exec_time<counter)
-                    $("#Log").html("Przetwarzanie...");
+                    $("#Log").html("Przetwarzanie (może trwać 3x czasu pobierania)...");
                 $("#Licznik").html("Czas: " + counter);
             }, 1000);
     }; 
