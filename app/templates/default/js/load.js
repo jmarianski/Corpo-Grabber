@@ -33,6 +33,7 @@ var loadSkeleton = function() {
     var path = $("#subsite").val();
     $.post(url1, {"path":path, "mode":"loadSkeleton"}, function(data, status) {
         if(data!="error") {
+            remove_selection();
             $("#skeleton").html(data);
             $("div.skeleton div").click(function(e) {
                 e.stopPropagation();
@@ -89,6 +90,10 @@ $("#load_tree").click(loadSkeleton);
 
 var select_branch = function(s) {
     change_color_on_select(s);
+};
+
+var remove_selection = function() {
+    selected = 0;  
 };
 
 var change_color_on_select = function(s) {
