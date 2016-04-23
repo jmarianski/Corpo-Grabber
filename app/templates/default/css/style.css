@@ -11,6 +11,10 @@ table.content {width:100%; table-layout: fixed; border: 1px solid black; }
 table.content td {vertical-align:top}
 input {width:100%}
 
+div.skeleton {width:100%; table-layout: fixed; border: 2px solid black;}
+div.skeleton div {table-layout: fixed; border: 1px solid black;
+              padding: 2px; margin: 2px; margin-left: 5px}
+
 div.chunk {padding: 5px; border-bottom: solid black 1px;}
 
 h1 { margin: 4px 0px; font-size: 18px; line-height: 30px; border-bottom: 1px solid #D49768; border-left: 15px solid #D49768; padding-left: 5px; }

@@ -154,56 +154,86 @@ class Downloader extends Controller
         View::renderTemplate('header', $data);
         View::render('main/load', $data);
         View::renderTemplate('footer', $data);
-	}
+    }
         
-        public function project() {
-            $mode = $_POST['mode'];
-            $path = utf8_decode($_POST['path']);
-            switch($mode) {
-                case "files":
-                    self::getFiles($_POST['project']);
-                    break;
-                case "loadSkeleton":
-                    // do stuff
-                    self::loadSkeleton($path);
-                    break;
-                case "loadPreview":
-                    if(!is_dir($path) && (pathinfo($path, PATHINFO_EXTENSION)=="html" 
-                                        || pathinfo($path, PATHINFO_EXTENSION)=="htm"))
-                            echo file_get_contents($path);
-                        else {
-                            echo "error";
-                        }
-                    break;
-                    
-            }
+    public function project() {
+        $mode = $_POST['mode'];
+        $path = utf8_decode($_POST['path']);
+        switch($mode) {
+            case "files":
+                self::getFiles($_POST['project']);
+                break;
+            case "loadSkeleton":
+                // do stuff
+                self::loadSkeleton($path);
+                break;
+            case "loadPreview":
+                if(!is_dir($path) && (pathinfo($path, PATHINFO_EXTENSION)=="html" 
+                                    || pathinfo($path, PATHINFO_EXTENSION)=="htm"))
+                        echo file_get_contents($path);
+                    else {
+                        echo "error";
+                    }
+                break;
+
         }
-        
-        private function getFiles($project) {
-                    $project = utf8_decode($project);
-                    $html = "";
-                    if(file_exists($project)) {
-                        $array = scandir($project);
-                        if($array!==false) {
-                            foreach($array as $file) {
-                                $p = $project."/".$file;
-				if(!is_dir($p) && (pathinfo($p, PATHINFO_EXTENSION)=="html" 
-                                        || pathinfo($p, PATHINFO_EXTENSION)=="htm"))
-                                    $html .= utf8_encode($file)."<BR>";
-                            }
+    }
+
+    private function getFiles($project) {
+                $project = utf8_decode($project);
+                $html = "";
+                if(file_exists($project)) {
+                    $array = scandir($project);
+                    if($array!==false) {
+                        foreach($array as $file) {
+                            $p = $project."/".$file;
+                            if(!is_dir($p) && (pathinfo($p, PATHINFO_EXTENSION)=="html" 
+                                    || pathinfo($p, PATHINFO_EXTENSION)=="htm"))
+                                $html .= utf8_encode($file)."<BR>";
                         }
-                        else
-                            echo 'error';
-                        if($html==="")
-                            echo 'error';
-                        echo $html;
                     }
                     else
                         echo 'error';
-        }
+                    if($html==="")
+                        echo 'error';
+                    echo $html;
+                }
+                else
+                    echo 'error';
+    }
+
+    private function loadSkeleton($path) {
+        $dom = new Dom();
+        $dom->loadFromFile($path, ["whitespaceTextNode"=>false]);
+        $tree = $dom->root;
+        $head = $tree->find("head")[0];
+        $head->delete();
+        unset($head);
+        echo self::skeletonBranch($tree, "root");
+    }
         
-        private function loadSkeleton($path) {
-            
+    private function skeletonBranch($branch, $name) {
+        if($name!="root")
+            $string = "<div id='$name'>";
+        else
+            $string = "<div id='root' class='skeleton'>";
+        $tag = $branch->getTag()->name();
+        if(!($branch instanceof Dom\TextNode))
+            $string.= "\n<B>$tag</B><BR>";
+        if(!($branch instanceof Dom\TextNode) && $branch->hasChildren()) {
+            $children = $branch->getChildren();
+            for($i=0; $i<count($children); $i++) {
+                $tag = $children[$i]->getTag()->name();
+                $string.= "\n".self::skeletonBranch($children[$i], 
+                        $name."-".$tag.":".$i);
+            }
         }
+        else {
+            $string.= "\n".$branch->innerHtml();
+        }
+        $string .= "\n</div>";
+        return $string;
+    }
+        
 
 }

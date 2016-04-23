@@ -108,7 +108,15 @@ use Core\Language;
     };
     
     var loadSkeleton = function() {
-        
+        path = $("#subsite").val();
+        $.post(url1, {"path":path, "mode":"loadSkeleton"}, function(data, status) {
+            if(data!="error") {
+                $("#skeleton").html(data);
+            }
+            else
+                $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
+                
+        });
     };
     var loadPreview = function() {
         path = $("#subsite").val();

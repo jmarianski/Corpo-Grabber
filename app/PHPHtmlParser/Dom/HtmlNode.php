@@ -9,7 +9,7 @@ use PHPHtmlParser\Exceptions\ChildNotFoundException;
  *
  * @package PHPHtmlParser\Dom
  */
-class HtmlNode extends ArrayNode
+class HtmlNode extends InnerNode
 {
 
     /**
@@ -160,7 +160,7 @@ class HtmlNode extends ArrayNode
             $node = $child['node'];
             if ($node instanceof TextNode) {
                 $text .= $child['node']->text;
-            } elseif ($lookInChildren and
+            } elseif ($lookInChildren &&
                 $node instanceof HtmlNode
             ) {
                 $text .= $node->text($lookInChildren);

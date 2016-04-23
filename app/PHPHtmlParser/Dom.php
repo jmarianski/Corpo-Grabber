@@ -1,7 +1,7 @@
 <?php
 namespace PHPHtmlParser;
 
-use PHPHtmlPArser\Dom\AbstractNode;
+use PHPHtmlParser\Dom\AbstractNode;
 use PHPHtmlParser\Dom\HtmlNode;
 use PHPHtmlParser\Dom\TextNode;
 use PHPHtmlParser\Exceptions\NotLoadedException;
@@ -358,10 +358,14 @@ class Dom
             return $str;
         }
 
+        // remove white space before closing tags
+        $str = mb_eregi_replace("'\s+>", "'>", $str);
+        $str = mb_eregi_replace('"\s+>', '">', $str);
+
         // clean out the \n\r
         $replace = ' ';
         if ($this->options->get('preserveLineBreaks')) {
-            $replace = '&#10';
+            $replace = '&#10;';
         }
         $str = str_replace(["\r\n", "\r", "\n"], $replace, $str);
 
@@ -385,9 +389,6 @@ class Dom
             $str = mb_eregi_replace("<\s*style[^>]*[^/]>(.*?)<\s*/\s*style\s*>", '', $str);
             $str = mb_eregi_replace("<\s*style\s*>(.*?)<\s*/\s*style\s*>", '', $str);
         }
-
-        // strip out preformatted tags
-        $str = mb_eregi_replace("<\s*(?:code)[^>]*>(.*?)<\s*/\s*(?:code)\s*>", '', $str);
 
         // strip out server side scripts
         $str = mb_eregi_replace("(<\?)(.*?)(\?>)", '', $str);
@@ -445,7 +446,7 @@ class Dom
                 if ( ! $node->getTag()->isSelfClosing()) {
                     $activeNode = $node;
                 }
-            } else if ($this->options->whitespaceTextNode or
+            } else if ($this->options->whitespaceTextNode ||
                 trim($str) != ''
             ) {
                 // we found text we care about
@@ -501,7 +502,7 @@ class Dom
         $node = new HtmlNode($tag);
 
         // attributes
-        while ($this->content->char() != '>' and
+        while ($this->content->char() != '>' &&
             $this->content->char() != '/') {
             $space = $this->content->skipByToken('blank', true);
             if (empty($space)) {
