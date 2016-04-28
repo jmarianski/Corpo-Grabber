@@ -207,8 +207,10 @@ class Downloader extends Controller
         $dom->loadFromFile($path, ["whitespaceTextNode"=>false]);
         $tree = $dom->root;
         $head = $tree->find("head")[0];
-        $head->delete();
-        unset($head);
+        if($head!=null) {
+            $head->delete();
+            unset($head);
+        }
         echo self::skeletonBranch($tree, "root");
     }
         

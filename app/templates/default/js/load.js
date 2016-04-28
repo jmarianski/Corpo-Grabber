@@ -38,9 +38,12 @@ var loadSkeleton = function() {
             $("div.skeleton div").click(function(e) {
                 e.stopPropagation();
                 select_branch(this);});
+            $("#rightbar button").prop('disabled', false);
         }
-        else
+        else {
             $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
+            $("#rightbar button").prop('disabled', true);
+        }
 
     });
 };
@@ -115,24 +118,44 @@ var change_color_on_select = function(s) {
     }
 };
 
+var change_color_on_hover = function(elem) {
+    
+};
+
+var apply_hover_effect = function(elem) {
+    $("#rightbar button:not(#"+elem.id+")").prop('disabled', true);
+            $("div.skeleton div").hover(function(e) {
+                e.stopPropagation();
+                change_color_on_hover(this);
+            });
+        };
+};
+
+var disable_hover_effect = function(elem) {
+    $("#rightbar button:not(#"+elem.id+")").prop('disabled', false);
+};
+
 
 var selecting = null;
 var elements = [];
 
 var click_but = function(elem) {
     if (selecting!=null) {
-        if(elements[elem] == null)
-            $("#" + elem).html("Zaznacz");
+        if(elements[elem.id] == null)
+            $("#" + elem.id).html("Zaznacz");
         else
-            $("#" + elem).html("Edytuj");
+            $("#" + elem.id).html("Edytuj");
         selecting = null;
+        disable_hover_effect(elem);
     } else {
-        selecting = elem;
-        $("#" + elem).html("Anuluj");
+        selecting = elem.id;
+        $("#" + elem.id).html("Anuluj");
+        apply_hover_effect(elem);
     }
 };
 
-window.onload = function() {setSize();};
+window.onload = function() {setSize();
+    $("#rightbar button").prop('disabled', true);};
 window.onresize = function() {setSize();};
 $("body").css("overflow", "hidden");
 

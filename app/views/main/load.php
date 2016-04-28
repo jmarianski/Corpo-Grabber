@@ -56,7 +56,7 @@ use Core\Language;
 </div>
 </div>
 </td>
-<td width="20%">
+<td width="20%" id="rightbar">
 	<table width="100%">
 	<tr>
 		<td>
@@ -76,7 +76,7 @@ use Core\Language;
 		Wpis:
 		</td>
 		<td>
-                    <button id="note" onclick="click_but('note')">Zaznacz</button>
+                    <button id="note" onclick="click_but(this)">Zaznacz</button>
 		</td>
 	</tr>
 	<tr id="authorrow">
@@ -84,7 +84,7 @@ use Core\Language;
 		Autor:
 		</td>
 		<td>
-                    <button id="author" onclick="click_but('author')">Zaznacz</button>
+                    <button id="author" onclick="click_but(this)">Zaznacz</button>
 		</td>
 	</tr>
 	<tr id="titlerow">
@@ -92,7 +92,7 @@ use Core\Language;
 		Tytuł:
 		</td>
 		<td>
-                    <button id="title" onclick="click_but('note')">Zaznacz</button>
+                    <button id="title" onclick="click_but(this)">Zaznacz</button>
 		</td>
 	</tr>
 	<tr id="daterow">
@@ -100,7 +100,7 @@ use Core\Language;
 		Data:
 		</td>
 		<td>
-                    <button id="date" onclick="click_but('date')">Zaznacz</button>
+                    <button id="date" onclick="click_but(this)">Zaznacz</button>
 		</td>
 	</tr>
 	<tr id="textrow">
@@ -108,7 +108,7 @@ use Core\Language;
 		Treść wpisu:
 		</td>
 		<td>
-                    <button id="text" onclick="click_but('text')">Zaznacz</button>
+                    <button id="text" onclick="click_but(this)">Zaznacz</button>
 		</td>
 	</tr>
 	</table>
