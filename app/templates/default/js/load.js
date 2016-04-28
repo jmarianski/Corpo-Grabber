@@ -93,6 +93,8 @@ var select_branch = function(s) {
 };
 
 var remove_selection = function() {
+    if($("#"+selected).length>0)
+        document.getElementById(selected).style.background = null;
     selected = 0;  
 };
 
@@ -113,6 +115,32 @@ var change_color_on_select = function(s) {
     }
 };
 
+
+var selecting = null;
+var elements = [];
+
+var click_but = function(elem) {
+    if (selecting!=null) {
+        if(elements[elem] == null)
+            $("#" + elem).html("Zaznacz");
+        else
+            $("#" + elem).html("Edytuj");
+        selecting = null;
+    } else {
+        selecting = elem;
+        $("#" + elem).html("Anuluj");
+    }
+};
+
 window.onload = function() {setSize();};
 window.onresize = function() {setSize();};
 $("body").css("overflow", "hidden");
+
+
+
+
+
+
+
+
+

@@ -60,18 +60,55 @@ use Core\Language;
 	<table width="100%">
 	<tr>
 		<td>
-		Number of words per chunk
+		Ile notek:
 		</td>
 		<td>
-		<input size=10 id="numWords" value=5>
+		<select id="numWords">
+                    <option value="01">0..1</option>
+                    <option value="0n">0..n</option>
+                    <option value="11">1..1</option>
+                    <option value="1n">1..n</option>
+                </select>
 		</td>
 	</tr>
-	<tr>
+	<tr id="noterow">
 		<td>
-		Leaf depth
+		Wpis:
 		</td>
 		<td>
-		<input size=10 id="leafDepth" value=0>
+                    <button id="note" onclick="click_but('note')">Zaznacz</button>
+		</td>
+	</tr>
+	<tr id="authorrow">
+		<td>
+		Autor:
+		</td>
+		<td>
+                    <button id="author" onclick="click_but('author')">Zaznacz</button>
+		</td>
+	</tr>
+	<tr id="titlerow">
+		<td>
+		Tytuł:
+		</td>
+		<td>
+                    <button id="title" onclick="click_but('note')">Zaznacz</button>
+		</td>
+	</tr>
+	<tr id="daterow">
+		<td>
+		Data:
+		</td>
+		<td>
+                    <button id="date" onclick="click_but('date')">Zaznacz</button>
+		</td>
+	</tr>
+	<tr id="textrow">
+		<td>
+		Treść wpisu:
+		</td>
+		<td>
+                    <button id="text" onclick="click_but('text')">Zaznacz</button>
 		</td>
 	</tr>
 	</table>
