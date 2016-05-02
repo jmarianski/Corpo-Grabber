@@ -103,39 +103,60 @@ var remove_selection = function() {
 
 var change_color_on_select = function(s) {
     var s_color = '#99ff88';
-    if(selected==0) {
-        selected = s.id;
+    if($(s).data("color")=="" || $(s).data("color")=="transparent") {
+        // color data is empty
+        $(s).data("color", s_color);
         s.style.background = s_color;
-    }
-    else if(selected==s.id) {
-        s.style.background = null;
-        selected = 0;
     }
     else {
-        document.getElementById(selected).style.background = null;
-        selected = s.id;
-        s.style.background = s_color;
+        // there was a color
+        // it means we have to make a gradient
+        if($(s).data("color")==s_color) {
+            $(s).data("color", "");
+            s.style.background = null;
+        }
+        else {
+            $(s).data("color", s_color);
+            s.style.background = s_color;
+        }
     }
 };
-
 var change_color_on_hover = function(elem) {
-    
+    elem.style.background = "#FF0000";
+};
+
+var set_default_color = function(elem) {
+    $(elem).css("background-color", $(elem).data("color"));
+};
+
+
+
+var change_color_on_unhover = function(elem) {        
+    $(elem).css("background-color", $(elem).data("color"));
+
 };
 
 var apply_hover_effect = function(elem) {
     $("#rightbar button:not(#"+elem.id+")").prop('disabled', true);
             $("div.skeleton div").hover(function(e) {
-                e.stopPropagation();
-                change_color_on_hover(this);
+                if(e.target.id==this.id)
+                    change_color_on_hover(this);
+                else
+                    set_default_color(this);
+            }, function(e) {
+                change_color_on_unhover(this);
+                if(e.target.id!=this.id)
+                    alert("test");
             });
-        };
 };
-
 var disable_hover_effect = function(elem) {
     $("#rightbar button:not(#"+elem.id+")").prop('disabled', false);
+    $("div.skeleton div").off("mouseenter mouseleave");
 };
 
-
+var valid_place = function(id1) {
+    
+};
 var selecting = null;
 var elements = [];
 
