@@ -122,6 +122,9 @@ var change_color_on_select = function(s) {
     }
 };
 var change_color_on_hover = function(elem) {
+    $("div.skeleton div:hover" ).css("background-color", "");
+    $("div.skeleton div").each(function() {
+                $(this).css("background-color", $(this).data("color"));});
     elem.style.background = "#FF0000";
 };
 
@@ -129,24 +132,26 @@ var set_default_color = function(elem) {
     $(elem).css("background-color", $(elem).data("color"));
 };
 
-
-
 var change_color_on_unhover = function(elem) {        
+    
+    $("div.skeleton div" ).css("background-color", "");
+    $("div.skeleton div").each(function() {
+                $(this).css("background-color", $(this).data("color"));});
+    $( elem )
+        .closest( $("div.skeleton div :hover").not($(elem)) )
+        .css( "background-color", "red" );
     $(elem).css("background-color", $(elem).data("color"));
+
 
 };
 
 var apply_hover_effect = function(elem) {
     $("#rightbar button:not(#"+elem.id+")").prop('disabled', true);
             $("div.skeleton div").hover(function(e) {
-                if(e.target.id==this.id)
-                    change_color_on_hover(this);
-                else
-                    set_default_color(this);
+                e.stopPropagation();
+                change_color_on_hover(this);
             }, function(e) {
                 change_color_on_unhover(this);
-                if(e.target.id!=this.id)
-                    alert("test");
             });
 };
 var disable_hover_effect = function(elem) {
