@@ -103,7 +103,12 @@ var remove_selection = function() {
 
 var change_color_on_select = function(s) {
     var s_color = '#99ff88';
-    if($(s).data("color")=="" || $(s).data("color")=="transparent") {
+    if(selecting!=null) {
+        elements[selecting] = s.id;
+        apply_color_select(s.id, selecting);
+        toggle_but(s.id);
+    }
+    else if($(s).data("color")=="" || $(s).data("color")=="transparent") {
         // color data is empty
         $(s).data("color", s_color);
         s.style.background = s_color;
@@ -121,11 +126,20 @@ var change_color_on_select = function(s) {
         }
     }
 };
+
+var apply_color_select = function(id, type) {
+    if(type=="note")
+        $("#"+id).css("background-color", "#9999ff");
+    else
+        $("#"+id).css("background-color", "#ffff00");
+        
+};
+
 var change_color_on_hover = function(elem) {
     $("div.skeleton div:hover" ).css("background-color", "");
     $("div.skeleton div").each(function() {
                 $(this).css("background-color", $(this).data("color"));});
-    elem.style.background = "#FF0000";
+    elem.style.background = hover_color(selecting, elem.id);
 };
 
 var set_default_color = function(elem) {
@@ -139,14 +153,16 @@ var change_color_on_unhover = function(elem) {
                 $(this).css("background-color", $(this).data("color"));});
     $( elem )
         .closest( $("div.skeleton div :hover").not($(elem)) )
-        .css( "background-color", "red" );
+        .each(function() {
+            $(this).css( "background-color", hover_color(selecting, this.id));
+        });
     $(elem).css("background-color", $(elem).data("color"));
 
 
 };
 
-var apply_hover_effect = function(elem) {
-    $("#rightbar button:not(#"+elem.id+")").prop('disabled', true);
+var apply_hover_effect = function(id) {
+    $("#rightbar button:not(#"+id+")").prop('disabled', true);
             $("div.skeleton div").hover(function(e) {
                 e.stopPropagation();
                 change_color_on_hover(this);
@@ -154,30 +170,52 @@ var apply_hover_effect = function(elem) {
                 change_color_on_unhover(this);
             });
 };
-var disable_hover_effect = function(elem) {
-    $("#rightbar button:not(#"+elem.id+")").prop('disabled', false);
+var disable_hover_effect = function(id) {
+    $("#rightbar button:not(#"+id+")").prop('disabled', false);
     $("div.skeleton div").off("mouseenter mouseleave");
 };
 
-var valid_place = function(id1) {
-    
+var hover_color = function(type, id) {
+    if(valid_place(type, id))
+        return '#99ff88';
+    else
+        return 'red';
+};
+
+var valid_place = function(type, id) {
+    if(type=="note" && elements.length==0){
+        return true;
+    }
+    else if(type=="note") {
+        elements.forEach(function(e) {
+            if(e.indexOf(id)!=0)
+                return false;
+        });
+        return true;
+    }
+    else if(id.indexOf(elements["note"])==0)
+        return true;
+    return false;
 };
 var selecting = null;
 var elements = [];
-
-var click_but = function(elem) {
+var toggle_but = function(id) {
+    
     if (selecting!=null) {
-        if(elements[elem.id] == null)
-            $("#" + elem.id).html("Zaznacz");
+        if(elements[id] == null)
+            $("#" + id).html("Zaznacz");
         else
-            $("#" + elem.id).html("Edytuj");
+            $("#" + id).html("Edytuj");
         selecting = null;
-        disable_hover_effect(elem);
+        disable_hover_effect(id);
     } else {
-        selecting = elem.id;
-        $("#" + elem.id).html("Anuluj");
-        apply_hover_effect(elem);
+        selecting = id;
+        $("#" + id).html("Anuluj");
+        apply_hover_effect(id);
     }
+};
+var click_but = function(elem) {
+    toggle_but(elem.id);
 };
 
 window.onload = function() {setSize();
