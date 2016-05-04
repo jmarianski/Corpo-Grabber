@@ -77,30 +77,35 @@ class Downloader extends Controller
         }
         
         private function checkHashes($path) {
-            $array = scandir($path);
-            $hashes = array();
-            foreach($array as $file) {
-                $file = $path.$file;
-                if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
-                                        || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
-                    $hash = hash_file("md5", $file);
-                    if(in_array($hash, $hashes))
-                        unlink ($file);
-                    else
-                        $hashes[] = $hash;
+            if(is_dir($path)) {
+                $array = scandir($path);
+                $hashes = array();
+                foreach($array as $file) {
+                    $file = $path.$file;
+                    if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
+                                            || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
+                        $hash = hash_file("md5", $file);
+                        if(in_array($hash, $hashes))
+                            unlink ($file);
+                        else
+                            $hashes[] = $hash;
+                    }
                 }
             }
         }
         private function removeScripts($path) {
             // will remove scripts from html to present data without scripts
-            $array = scandir($path);
-            foreach($array as $file) {
-                $file = $path.$file;
-                if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
-                                        || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
-                    $dom = new Dom();
-                    $dom->loadFromFile($file, []);
-                    file_put_contents($file, $dom->root->innerHTML());
+            
+            if(is_dir($path)) {
+                $array = scandir($path);
+                foreach($array as $file) {
+                    $file = $path.$file;
+                    if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
+                                            || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
+                        $dom = new Dom();
+                        $dom->loadFromFile($file, []);
+                        file_put_contents($file, $dom->root->innerHTML());
+                    }
                 }
             }
         }
