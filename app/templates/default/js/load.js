@@ -106,32 +106,20 @@ var change_color_on_select = function(s) {
     if(selecting!=null) {
         elements[selecting] = s.id;
         apply_color_select(s.id, selecting);
-        toggle_but(s.id);
-    }
-    else if($(s).data("color")=="" || $(s).data("color")=="transparent") {
-        // color data is empty
-        $(s).data("color", s_color);
-        s.style.background = s_color;
-    }
-    else {
-        // there was a color
-        // it means we have to make a gradient
-        if($(s).data("color")==s_color) {
-            $(s).data("color", "");
-            s.style.background = null;
-        }
-        else {
-            $(s).data("color", s_color);
-            s.style.background = s_color;
-        }
+        toggle_but(selecting);
     }
 };
 
 var apply_color_select = function(id, type) {
-    if(type=="note")
-        $("#"+id).css("background-color", "#9999ff");
-    else
-        $("#"+id).css("background-color", "#ffff00");
+    var elem = $(document.getElementById(id));
+    if(type=="note") {
+        elem.css("background-color", "#9999ff");
+        elem.data("color", "#9999ff");
+    }
+    else {
+        elem.css("background-color", "#ffff00");
+        elem.data("color", "#ffff00");
+    }
         
 };
 
@@ -200,7 +188,6 @@ var valid_place = function(type, id) {
 var selecting = null;
 var elements = [];
 var toggle_but = function(id) {
-    
     if (selecting!=null) {
         if(elements[id] == null)
             $("#" + id).html("Zaznacz");
