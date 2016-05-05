@@ -49,7 +49,7 @@ use Core\Language;
 	</tr>
 </table>
 <div id="contents">
-    <div id="preview">
+    <div id="preview" style="border:solid black 1px; visibility:collapse">
     </div>
     <div id="skeleton" style="overflow:scroll; overflow-x: hidden">
     </div>

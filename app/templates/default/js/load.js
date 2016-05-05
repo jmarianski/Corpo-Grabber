@@ -25,6 +25,8 @@ var loadFiles = function() {
             document.getElementById("load-preview").style.visibility = "collapse";
             document.getElementById("button_load").style.visibility = "collapse";
         }
+        disturbed();
+        $("#preview").css("visibility", "collapse");
         setSize();
     });
 };
@@ -35,6 +37,7 @@ var loadSkeleton = function() {
         if(data!="error") {
             remove_selection();
             $("#skeleton").html(data);
+            $("#skeleton").css("border", "solid 1px black");
             $("div.skeleton div").click(function(e) {
                 e.stopPropagation();
                 select_branch(this);});
@@ -49,6 +52,7 @@ var loadSkeleton = function() {
 };
 var iframe_body = "";
 var loadPreview = function() {
+    $("#preview").css("visibility", "visible");
     path = $("#subsite").val();
     if(iframe_body=="") {
         $.post(url1, {"path":path, "mode":"loadPreview"}, function(data, status) {
@@ -61,7 +65,6 @@ var loadPreview = function() {
         });
     }
     else {
-        $("#preview").css("visibility", "visible");
             setSize();
             onclick_show_set_interactions();
     }
@@ -70,7 +73,7 @@ var loadPreview = function() {
 
 var show_iframe = function(data) {
         iframe_body = data;
-        var $frame = $('<iframe style="width:100%">');
+        var $frame = $('<iframe style="width:100%"  frameBorder="0">');
         $('#preview').html( $frame );
         setTimeout( function() {
                 var doc = $frame[0].contentWindow.document;
@@ -86,12 +89,14 @@ var onclick_show_set_interactions = function() {
         $("#preview_button").click(hidePrev);
 };
 
-$("#subsite").change(function() {
+$("#subsite").change(function(){disturbed();});
+
+var disturbed = function() {
     $("#preview_button").html("Podgląd");
     $("#preview_button").unbind("click");
     $("#preview_button").click(loadPreview);
     iframe_body = "";
-});
+};
 
 var hidePrev = function() {
     // $("#preview").html(" ");
