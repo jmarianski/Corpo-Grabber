@@ -48,10 +48,10 @@ use Core\Language;
 		</td>
 	</tr>
 </table>
-<div id="contents" style="overflow:scroll">
+<div id="contents">
     <div id="preview">
     </div>
-    <div id="skeleton">
+    <div id="skeleton" style="overflow:scroll; overflow-x: hidden">
     </div>
 </div>
 </div>

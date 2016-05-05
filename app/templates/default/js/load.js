@@ -47,36 +47,56 @@ var loadSkeleton = function() {
 
     });
 };
+var iframe_body = "";
 var loadPreview = function() {
     path = $("#subsite").val();
-    $.post(url1, {"path":path, "mode":"loadPreview"}, function(data, status) {
-        if(data!="error") {
-                    var $frame = $('<iframe style="width:99%; height:500px;">');
-                    $('#preview').html( $frame );
-                    setTimeout( function() {
-                            var doc = $frame[0].contentWindow.document;
-                            var $body = $('body',doc);
-                            $body.html(data);
-                    }, 1 );
-            $("#preview_button").html("Schowaj");
-            $("#preview_button").unbind("click");
-            $("#preview_button").click(hidePrev);
-        }
-        else
-            $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
-        setSize();
+    if(iframe_body=="") {
+        $.post(url1, {"path":path, "mode":"loadPreview"}, function(data, status) {
+            if(data!="error") {
+                show_iframe(data);
+            }
+            else
+                $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
+            setSize();
+        });
+    }
+    else {
+        $("#preview").css("visibility", "visible");
+            setSize();
+            onclick_show_set_interactions();
+    }
+    
+};
 
-    });
+var show_iframe = function(data) {
+        iframe_body = data;
+        var $frame = $('<iframe style="width:100%">');
+        $('#preview').html( $frame );
+        setTimeout( function() {
+                var doc = $frame[0].contentWindow.document;
+                var $body = $('body',doc);
+                $body.html(data);
+        }, 1 );
+        onclick_show_set_interactions();
+};
+
+var onclick_show_set_interactions = function() {
+        $("#preview_button").html("Schowaj");
+        $("#preview_button").unbind("click");
+        $("#preview_button").click(hidePrev);
 };
 
 $("#subsite").change(function() {
     $("#preview_button").html("Podgląd");
     $("#preview_button").unbind("click");
     $("#preview_button").click(loadPreview);
+    iframe_body = "";
 });
 
 var hidePrev = function() {
-    $("#preview").html(" ");
+    // $("#preview").html(" ");
+    $("#preview").css("visibility", "collapse");
+    $("#preview").css("height", "0px");
     $("#preview_button").html("Podgląd");
     $("#preview_button").unbind("click");
     $("#preview_button").click(loadPreview);
@@ -84,6 +104,15 @@ var hidePrev = function() {
 };
 var setSize = function() {
     var tmpHeight = $(window).height() - $("#contents").offset().top;
+    if($("#preview").has("iframe").length>0 && $("#preview").css("visibility")!="collapse") {
+        $('#preview iframe').css('height',tmpHeight/2 - 7+"px");
+        $("#preview").css("height", tmpHeight/2+"px");
+        $('#skeleton').css('height',tmpHeight/2+"px");
+    }
+    else {
+        $('#skeleton').css('height',tmpHeight+"px");
+        $("#preview").css("height", "0px");
+    }
     $('#contents').css('height',tmpHeight+"px");
 };
 
