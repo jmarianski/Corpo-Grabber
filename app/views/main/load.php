@@ -21,7 +21,10 @@ use Core\Language;
 			<select style="width: 100%" id="project"><?php
                           foreach($data['projects'] as $project) {
                               ?>
-                            <option value="<?=utf8_encode($project)?>"><?=  utf8_encode(substr($project, 4))?></option>
+                            <option value="<?=utf8_encode($project)?>"<?php
+                                    if(strpos($project, "tmp/".$_POST['url'])===0) {
+                                    echo " selected";}
+                                    ?>><?=  utf8_encode(substr($project, 4))?></option>
                                 <?php
                           }  
 			?></select>
@@ -117,3 +120,13 @@ use Core\Language;
 </tr>
 </table>
 <script src="/corpo-grabber/app/templates/default/js/load.js" type="text/javascript"></script>
+<?php
+if(strlen($_POST['url'])>0) {
+    ?><script>
+    window.onload = function() {
+        loadFilesParams("<?="tmp/".$_POST['url']."/web/"?>", url1);
+    };
+</script>
+<?php
+}
+    

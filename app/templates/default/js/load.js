@@ -4,10 +4,14 @@ var selected = 0;
 var loadFiles = function() {
     project = $("#project").val();
     project += "/web/";
+    loadFilesParams(project, url1);
+};
+
+var loadFilesParams = function(project, url) {
     var select = document.getElementById("subsite");
     $("#subsite").empty();
-    $.post(url1, {"project":project, "mode":"files"}, function(data, status) {
-        if(data!=="error") {
+    $.post(url, {"project":project, "mode":"files"}, function(data, status) {
+        if(data.indexOf("error")!=0) {
             var array = data.split("<BR>");
             for(var i=0; i<array.length; i++) {
                    var opt = document.createElement("option");
@@ -17,10 +21,10 @@ var loadFiles = function() {
             }
             document.getElementById("load-preview").style.visibility = "visible";
             document.getElementById("button_load").style.visibility = "visible";
-            $("#preview").html(" ");
+            $("#skeleton").html(" ");
         }
         else {
-            $("#preview").html("Błąd: projekt nie zawiera stron internetowych. \n\
+            $("#skeleton").html("Błąd: projekt nie zawiera stron internetowych. \n\
             Prawdopodobnie strona ta nie została pobrana poprawnie.");
             document.getElementById("load-preview").style.visibility = "collapse";
             document.getElementById("button_load").style.visibility = "collapse";
