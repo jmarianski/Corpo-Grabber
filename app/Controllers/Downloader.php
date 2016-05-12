@@ -187,16 +187,18 @@ class Downloader extends Controller
         }
     }
 
-    private function savePattern($project, $data) {
+    private function savePattern($project, $data_before_decode) {
+        set_time_limit(300); // TODO: remove later
+        $data = json_decode($data_before_decode, true);
         $project = utf8_decode($project);
-        if(strlen($data['note']>0) ){
+        if(strlen($data['fields']['note'])>0 ){
             if(file_exists($project)) {
                 $array = scandir($project);
                 if($array!==false) {
                     $result = [];
                     $i = 0;
                     foreach($array as $file) {
-                        if(file_exists($file)) {
+                        if(file_exists($project.$file)) {
                             $result["document-".($i++)] = self::applyPatternToFile($project.$file, $data['fields'], $data['ignore']);
                         }
                     }
@@ -218,36 +220,40 @@ class Downloader extends Controller
     
     private function applyPatternToFile($file, $fields, $ignore) {
         // by now, note exists
-        $tree = self::prepareTreeForLoadFile($file);
         $array = [];
-        // delete ignored lines
-        if(true) { // check liczność
-            $branches = [];
-            foreach($fields as $key => $value) {
-                $branches[$key] = self::goToBranch($tree, $value);
-            }
-            self::deleteIgnores($tree, "root", $ignore);
-            $array = self::applyPatternToSection($branches);
-        } else {
-            $note = self::goToBranch($tree, $fields['note']);
-            $siblings = $note.getParent().getChildren();
-            $newfields = [];
-            foreach($fields as $key => $field) {
-                if($key!="note") {
-                    $newfields[$key] = str_replace($fields['note'], "root", $field);
-                }
-            }
-            $i = 0;
-            foreach($siblings as $child) {
-                // $child to nasz nowy root
-                $papa = $child->getTag()->getAttribute("id");
+        if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
+                                    || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
+            $tree = self::prepareTreeForLoadFile($file);
+            // delete ignored lines
+            if(true) { // check liczność
                 $branches = [];
-                foreach($newfields as $key => $value) {
-                    $branches[$key] = self::goToBranch($note, $value);
+                foreach($fields as $key => $value) {
+                    $branches[$key] = self::goToBranch($tree, $value);
                 }
-                self::deleteIgnores($papa, "root", $ignore);
-                $array["note-".($i++)] = self::applyPatternToSection($branches);
+                self::deleteIgnores($tree, "root", $ignore);
+                $array = self::applyPatternToSection($branches);
+            } else {
+                $note = self::goToBranch($tree, $fields['note']);
+                $siblings = $note.getParent().getChildren();
+                $newfields = [];
+                foreach($fields as $key => $field) {
+                    if($key!="note") {
+                        $newfields[$key] = str_replace($fields['note'], "root", $field);
+                    }
+                }
+                $i = 0;
+                foreach($siblings as $child) {
+                    // $child to nasz nowy root
+                    $papa = $child->getTag()->getAttribute("id");
+                    $branches = [];
+                    foreach($newfields as $key => $value) {
+                        $branches[$key] = self::goToBranch($note, $value);
+                    }
+                    self::deleteIgnores($papa, "root", $ignore);
+                    $array["note-".($i++)] = self::applyPatternToSection($branches);
+                }
             }
+            unset($tree);
         }
         return $array;
         /*
@@ -280,14 +286,15 @@ class Downloader extends Controller
     }
     
     private function applyPatternToSection($branches) {
+        /*
         $vals = array_values($branches);
         for($i = 0; $i<count($vals); $i++) {
             for($j = 0; $j<count($vals); $i++) {
-                if($vals[$j].isAncestor($vals[$i].id())) {
+                if($vals[$j]!== false && $vals[$j]->isAncestor($vals[$i].id())) {
                     $vals[$j]->delete();
                 }
             }
-        }
+        }*/
         $result = [];
         // elementy zostały rozłączone
         foreach($branches as $key => $value) {
@@ -305,7 +312,7 @@ class Downloader extends Controller
             // allowable tags
             $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
             $array = array();
-            if($data->hasChildren()) {
+            if($data!==false && $data->hasChildren()) {
                     if(count($data->getChildren())>0) {
                                     foreach($data->getChildren() as $child) {
                                             $children = $child->getChildren();
@@ -334,7 +341,7 @@ class Downloader extends Controller
                                     }
                     }
             }
-            else {
+            else if ($data!==false) {
                 if(strlen(trim($data->text()))>0)
                     $array[] = trim($data->text());
             }
@@ -354,7 +361,7 @@ class Downloader extends Controller
         $array = split("-", $string);
         for($i = 1; $i<count($array); $i++) { // root jest pierwszy
             $pos = split(":", $array[$i]);
-            $children = $branch->getChildren();
+            $children = $current->getChildren();
             $j = 1;
             $got = false;
             for($k=0; $i<count($children) && !$got; $k++) {
@@ -399,6 +406,7 @@ class Downloader extends Controller
     }
 
     private function prepareTreeForLoadFile($path) {
+        echo $path."<BR>";
         $dom = new Dom();
         $dom->loadFromFile($path, ["whitespaceTextNode"=>false]);
         $tree = $dom->root;

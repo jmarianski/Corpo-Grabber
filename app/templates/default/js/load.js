@@ -75,6 +75,23 @@ var loadPreview = function() {
     
 };
 
+var sendRequest = function() {
+    var data = {};
+    data["fields"] = elements;
+    data["ignore"] = [];
+    var json = JSON.stringify(data);
+    alert(JSON.stringify(elements));
+        $.post(url1, {"mode": "savePattern", "project":project, "data":json}, function(data, status) {
+        if(data.indexOf("error")!=0) {
+            alert(data);
+        }
+        else {
+            alert(data);
+        }
+
+    });
+};
+
 var show_iframe = function(data) {
         iframe_body = data;
         var $frame = $('<iframe style="width:100%"  frameBorder="0">');
@@ -125,10 +142,6 @@ var setSize = function() {
     $('#contents').css('height',tmpHeight+"px");
 };
 
-$("#submit_load").click(loadFiles);
-$("#preview_button").click(loadPreview);
-$("#load_tree").click(loadSkeleton);
-
 var select_branch = function(s) {
     change_color_on_select(s);
 };
@@ -140,7 +153,7 @@ var remove_selection = function() {
 };
 
 var change_color_on_select = function(s) {
-    if(selecting!=null) {
+    if(selecting!=null && valid_place(selecting, s.id)) {
         elements[selecting] = s.id;
         apply_color_select(s.id, selecting);
         toggle_but(selecting);
@@ -211,14 +224,16 @@ var hover_color = function(type, id) {
 };
 
 var valid_place = function(type, id) {
-    if(type=="note" && elements.length==0){
+    if(elements[type]==id)
+        return false;
+    else if(type=="note" && Object.keys(elements).length===0){
         return true;
     }
     else if(type=="note") {
-        elements.forEach(function(e) {
-            if(e.indexOf(id)!=0)
+        for(var el in elements) {
+            if(el!== type && elements[el].indexOf(id)!==0)
                 return false;
-        });
+        }
         return true;
     }
     else if(id.indexOf(elements["note"])==0)
@@ -226,7 +241,7 @@ var valid_place = function(type, id) {
     return false;
 };
 var selecting = null;
-var elements = [];
+var elements = {};
 var toggle_but = function(id) {
     if (selecting!=null) {
         if(elements[id] == null)
@@ -251,10 +266,8 @@ window.onresize = function() {setSize();};
 $("body").css("overflow", "hidden");
 
 
-
-
-
-
-
-
+$("#submit_load").click(loadFiles);
+$("#preview_button").click(loadPreview);
+$("#load_tree").click(loadSkeleton);
+$("#submit").click(sendRequest);
 
