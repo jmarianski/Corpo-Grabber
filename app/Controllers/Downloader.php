@@ -193,13 +193,14 @@ class Downloader extends Controller
             if(file_exists($project)) {
                 $array = scandir($project);
                 if($array!==false) {
+                    $result = [];
+                    $i = 0;
                     foreach($array as $file) {
                         if(file_exists($file)) {
-                            echo self::applyPatternToFile($file, $data['fields'], $data['ignore'])."<BR>";
+                            $result["document-".($i++)] = self::applyPatternToFile($project.$file, $data['fields'], $data['ignore']);
                         }
-                        else
-                            echo 'error nofile<BR>\n';
                     }
+                    echo json_encode($result);
                 }
                 else
                     echo 'error3';
@@ -218,38 +219,37 @@ class Downloader extends Controller
     private function applyPatternToFile($file, $fields, $ignore) {
         // by now, note exists
         $tree = self::prepareTreeForLoadFile($file);
+        $array = [];
         // delete ignored lines
-        foreach($ignore as $value) {
-            $branch = self::goToBranch($tree, $value);
-            if($branch!=null && $branch!=false) {
-                $branch->delete();
-                unset($branch);
-            }
-        }
         if(true) { // check liczność
             $branches = [];
             foreach($fields as $key => $value) {
                 $branches[$key] = self::goToBranch($tree, $value);
             }
-            self::applyPatternToSection($branches);
+            self::deleteIgnores($tree, "root", $ignore);
+            $array = self::applyPatternToSection($branches);
         } else {
             $note = self::goToBranch($tree, $fields['note']);
-            $sibling = $note.getParent().getChildren();
+            $siblings = $note.getParent().getChildren();
             $newfields = [];
             foreach($fields as $key => $field) {
                 if($key!="note") {
                     $newfields[$key] = str_replace($fields['note'], "root", $field);
                 }
             }
-            foreach($sibling as $child) {
+            $i = 0;
+            foreach($siblings as $child) {
                 // $child to nasz nowy root
+                $papa = $child->getTag()->getAttribute("id");
                 $branches = [];
                 foreach($newfields as $key => $value) {
                     $branches[$key] = self::goToBranch($note, $value);
                 }
-                applyPatternToSection($branches);
+                self::deleteIgnores($papa, "root", $ignore);
+                $array["note-".($i++)] = self::applyPatternToSection($branches);
             }
         }
+        return $array;
         /*
          * 0. Wczytaj plik
          * 1. Go to notka in tree done
@@ -265,6 +265,20 @@ class Downloader extends Controller
          */
     }
     
+    private function deleteIgnores($root, $rootstring, $ignores) {
+        $ign = [];
+        foreach($ignores as $value) {
+            $ign[] = str_replace($rootstring, "root", $value);
+        }
+        foreach($ign as $value) {
+            $branch = self::goToBranch($root, $value);
+            if($branch!=null && $branch!=false) {
+                $branch->delete();
+                unset($branch);
+            }
+        }
+    }
+    
     private function applyPatternToSection($branches) {
         $vals = array_values($branches);
         for($i = 0; $i<count($vals); $i++) {
@@ -274,9 +288,61 @@ class Downloader extends Controller
                 }
             }
         }
+        $result = [];
         // elementy zostały rozłączone
-        
+        foreach($branches as $key => $value) {
+            $array = self::getChunksHelper($value);
+            for($i = 0; $i<count($array); $i++) {
+                $result[$key."-".$i] = $array[$i];
+            }
+        }
+        return $result;
+		
     }
+    
+    	
+    private function getChunksHelper($data) {
+            // allowable tags
+            $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
+            $array = array();
+            if($data->hasChildren()) {
+                    if(count($data->getChildren())>0) {
+                                    foreach($data->getChildren() as $child) {
+                                            $children = $child->getChildren();
+                                            $var = true;
+                                            foreach($children as $c) {
+                                                    $var2 = false;
+                                                    foreach($tags as $tag) {
+                                                            $t = strtolower($c->getTag()->name());
+                                                            if($t==$tag)
+                                                                    $var2 = true;
+                                                    }
+                                                    if(!$var2) {
+                                                            $var = false;
+                                                    }
+                                            }
+                                            if(!$var && count($children)>0) {
+                                                    $a = self::getChunksHelper($child);
+                                                    if(count($a)>0)
+                                                            $array = array_merge($array, $a);
+                                            }
+                                            else {
+                                                    $string = trim(strip_tags($child->innerHTML()));
+                                                    if(strlen($string)>0)
+                                                            $array[] = $string;
+                                            }
+                                    }
+                    }
+            }
+            else {
+                if(strlen(trim($data->text()))>0)
+                    $array[] = trim($data->text());
+            }
+            return $array;
+    }
+    
+    
+    
     /**
      * 
      * @param type $root
