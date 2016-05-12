@@ -154,9 +154,13 @@ var apply_color_select = function(id, type) {
         elem.css("background-color", "#9999ff");
         elem.data("color", "#9999ff");
     }
-    else {
+    else if(type=="text") {
         elem.css("background-color", "#ffff00");
         elem.data("color", "#ffff00");
+    }
+    else {
+        elem.css("background-color", "#dddd00");
+        elem.data("color", "#dddd00");
     }
         
 };

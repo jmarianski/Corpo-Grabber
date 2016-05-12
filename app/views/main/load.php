@@ -22,8 +22,8 @@ use Core\Language;
                           foreach($data['projects'] as $project) {
                               ?>
                             <option value="<?=utf8_encode($project)?>"<?php
-                                    if(strpos($project, "tmp/".$_POST['url'])===0) {
-                                    echo " selected";}
+                                    if(strpos(strlen($_POST['url'])>0 && $project, "tmp/".$_POST['url'])===0) {
+                                        echo " selected";}
                                     ?>><?=  utf8_encode(substr($project, 4))?></option>
                                 <?php
                           }  

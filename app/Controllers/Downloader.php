@@ -180,10 +180,135 @@ class Downloader extends Controller
                         echo "error";
                     }
                 break;
+            case "savePattern":
+                self::savePattern($_POST['project'], $_POST['data']);
+                break;
 
         }
     }
 
+    private function savePattern($project, $data) {
+        $project = utf8_decode($project);
+        if(strlen($data['note']>0) ){
+            if(file_exists($project)) {
+                $array = scandir($project);
+                if($array!==false) {
+                    foreach($array as $file) {
+                        if(file_exists($file)) {
+                            echo self::applyPatternToFile($file, $data['fields'], $data['ignore'])."<BR>";
+                        }
+                        else
+                            echo 'error nofile<BR>\n';
+                    }
+                }
+                else
+                    echo 'error3';
+                if($html==="")
+                    echo 'error2';
+                echo $html;
+            }
+            else
+                echo 'error project '.$project;
+        }
+        else {
+            echo 'error nonote'; 
+        }
+    }
+    
+    private function applyPatternToFile($file, $fields, $ignore) {
+        // by now, note exists
+        $tree = self::prepareTreeForLoadFile($file);
+        // delete ignored lines
+        foreach($ignore as $value) {
+            $branch = self::goToBranch($tree, $value);
+            if($branch!=null && $branch!=false) {
+                $branch->delete();
+                unset($branch);
+            }
+        }
+        if(true) { // check liczność
+            $branches = [];
+            foreach($fields as $key => $value) {
+                $branches[$key] = self::goToBranch($tree, $value);
+            }
+            self::applyPatternToSection($branches);
+        } else {
+            $note = self::goToBranch($tree, $fields['note']);
+            $sibling = $note.getParent().getChildren();
+            $newfields = [];
+            foreach($fields as $key => $field) {
+                if($key!="note") {
+                    $newfields[$key] = str_replace($fields['note'], "root", $field);
+                }
+            }
+            foreach($sibling as $child) {
+                // $child to nasz nowy root
+                $branches = [];
+                foreach($newfields as $key => $value) {
+                    $branches[$key] = self::goToBranch($note, $value);
+                }
+                applyPatternToSection($branches);
+            }
+        }
+        /*
+         * 0. Wczytaj plik
+         * 1. Go to notka in tree done
+         * 2. Check liczność not done
+         * 3. If liczność == 0..n lub 1..n rób pętlę dla dzieci rodzica done
+         * 4. Dla wszystkich elementów z data znajdź elementy w drzewie i
+         * zapamiętaj jako chunk 
+         * // xces nie wymaga morfeusza
+         * 5. Zaaplikuj słownik morfeusz, podziel na słowa ze słownika
+         * 6. Zapisz plik ccl do katalogu N (gdzie N oznacza N-tą próbę zapisu)
+         * 7. Spakuj do zipa
+         * 8. Prześlij plik zip
+         */
+    }
+    
+    private function applyPatternToSection($branches) {
+        $vals = array_values($branches);
+        for($i = 0; $i<count($vals); $i++) {
+            for($j = 0; $j<count($vals); $i++) {
+                if($vals[$j].isAncestor($vals[$i].id())) {
+                    $vals[$j]->delete();
+                }
+            }
+        }
+        // elementy zostały rozłączone
+        
+    }
+    /**
+     * 
+     * @param type $root
+     * @param type $string
+     * @return HTMLNode|boolean
+     */
+    private function goToBranch($root, $string) {
+        $current = $root;
+        $array = split("-", $string);
+        for($i = 1; $i<count($array); $i++) { // root jest pierwszy
+            $pos = split(":", $array[$i]);
+            $children = $branch->getChildren();
+            $j = 1;
+            $got = false;
+            for($k=0; $i<count($children) && !$got; $k++) {
+                $tag = $children[$k]->getTag()->name();
+                if($tag===$pos[0]) {
+                    if($j==$pos[1]) {
+                        $current = $children[$k];
+                        $got = true;
+                    }
+                    else
+                        $j++;
+                }
+            }
+            if(!$got && $i<count($array)-1) // nie znaleziono w drzewie
+                return false;
+        }
+        return $current;
+        
+    }
+    
     private function getFiles($project) {
                 $project = utf8_decode($project);
                 $html = "";
@@ -198,16 +323,16 @@ class Downloader extends Controller
                         }
                     }
                     else
-                        echo 'error';
+                        echo 'error3';
                     if($html==="")
-                        echo 'error';
+                        echo 'error2';
                     echo $html;
                 }
                 else
-                    echo 'error';
+                    echo 'error '.$project;
     }
 
-    private function loadSkeleton($path) {
+    private function prepareTreeForLoadFile($path) {
         $dom = new Dom();
         $dom->loadFromFile($path, ["whitespaceTextNode"=>false]);
         $tree = $dom->root;
@@ -216,6 +341,11 @@ class Downloader extends Controller
             $head->delete();
             unset($head);
         }
+        return $tree;
+    }
+    
+    private function loadSkeleton($path) {
+        $tree = self::prepareTreeForLoadFile($path);
         echo self::skeletonBranch($tree, "root");
     }
         
@@ -229,10 +359,15 @@ class Downloader extends Controller
             $string.= "\n<B>$tag</B><BR>";
         if(!($branch instanceof Dom\TextNode) && $branch->hasChildren()) {
             $children = $branch->getChildren();
+            $items = [];
             for($i=0; $i<count($children); $i++) {
                 $tag = $children[$i]->getTag()->name();
+                if(array_key_exists($tag, $items))
+                    $items[$tag]++;
+                else
+                    $items[$tag] = 1;
                 $string.= "\n".self::skeletonBranch($children[$i], 
-                        $name."-".$tag.":".$i);
+                        $name."-".$tag.":".$items[$tag]);
             }
         }
         else {
