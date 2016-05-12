@@ -140,7 +140,6 @@ var remove_selection = function() {
 };
 
 var change_color_on_select = function(s) {
-    var s_color = '#99ff88';
     if(selecting!=null) {
         elements[selecting] = s.id;
         apply_color_select(s.id, selecting);
@@ -149,44 +148,43 @@ var change_color_on_select = function(s) {
 };
 
 var apply_color_select = function(id, type) {
+    reload_colors();
     var elem = $(document.getElementById(id));
-    if(type=="note") {
-        elem.css("background-color", "#9999ff");
-        elem.data("color", "#9999ff");
-    }
-    else if(type=="text") {
-        elem.css("background-color", "#ffff00");
-        elem.data("color", "#ffff00");
-    }
-    else {
-        elem.css("background-color", "#dddd00");
-        elem.data("color", "#dddd00");
-    }
+    var color = get_color_select(type);
+    elem.css("background-color", color);
         
 };
 
+var get_color_select = function(type) {
+    if(type=="note") 
+        return "#9999ff";
+    else if(type=="text") 
+        return  "#ffff00";
+    else 
+        return "#dddd00";
+};
+
 var change_color_on_hover = function(elem) {
-    $("div.skeleton div:hover" ).css("background-color", "");
-    $("div.skeleton div").each(function() {
-                $(this).css("background-color", $(this).data("color"));});
+    reload_colors();
     elem.style.background = hover_color(selecting, elem.id);
 };
 
-var set_default_color = function(elem) {
-    $(elem).css("background-color", $(elem).data("color"));
+var reload_colors = function() {
+    $("div.skeleton div" ).css("background-color", "");
+    for(var key in elements) {
+        $(document.getElementById(elements[key])).css("background-color", 
+                get_color_select(key));
+    }
 };
 
-var change_color_on_unhover = function(elem) {        
-    
-    $("div.skeleton div" ).css("background-color", "");
-    $("div.skeleton div").each(function() {
-                $(this).css("background-color", $(this).data("color"));});
+
+var change_color_on_unhover = function(elem) {       
+    reload_colors();
     $( elem )
         .closest( $("div.skeleton div :hover").not($(elem)) )
         .each(function() {
             $(this).css( "background-color", hover_color(selecting, this.id));
         });
-    $(elem).css("background-color", $(elem).data("color"));
 
 
 };
