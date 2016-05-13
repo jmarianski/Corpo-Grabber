@@ -80,10 +80,9 @@ var sendRequest = function() {
     data["fields"] = elements;
     data["ignore"] = [];
     var json = JSON.stringify(data);
-    alert(JSON.stringify(elements));
         $.post(url1, {"mode": "savePattern", "project":project, "data":json}, function(data, status) {
         if(data.indexOf("error")!=0) {
-            alert(data);
+            show_iframe(data);
         }
         else {
             alert(data);

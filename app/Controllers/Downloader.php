@@ -228,7 +228,8 @@ class Downloader extends Controller
             if(true) { // check liczność
                 $branches = [];
                 foreach($fields as $key => $value) {
-                    $branches[$key] = self::goToBranch($tree, $value);
+                    if($key!="note")
+                        $branches[$key] = self::goToBranch($tree, $value);
                 }
                 self::deleteIgnores($tree, "root", $ignore);
                 $array = self::applyPatternToSection($branches);
@@ -312,33 +313,40 @@ class Downloader extends Controller
             // allowable tags
             $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
             $array = array();
-            if($data!==false && $data->hasChildren()) {
+            if($data!==false && !($data instanceof Dom\TextNode) && $data->hasChildren()) {
                     if(count($data->getChildren())>0) {
-                                    foreach($data->getChildren() as $child) {
-                                            $children = $child->getChildren();
-                                            $var = true;
-                                            foreach($children as $c) {
-                                                    $var2 = false;
-                                                    foreach($tags as $tag) {
-                                                            $t = strtolower($c->getTag()->name());
-                                                            if($t==$tag)
-                                                                    $var2 = true;
-                                                    }
-                                                    if(!$var2) {
-                                                            $var = false;
-                                                    }
-                                            }
-                                            if(!$var && count($children)>0) {
-                                                    $a = self::getChunksHelper($child);
-                                                    if(count($a)>0)
-                                                            $array = array_merge($array, $a);
-                                            }
-                                            else {
-                                                    $string = trim(strip_tags($child->innerHTML()));
-                                                    if(strlen($string)>0)
-                                                            $array[] = $string;
-                                            }
-                                    }
+                        foreach($data->getChildren() as $child) {
+                            if($child instanceof Dom\TextNode) {
+                                $string = trim(strip_tags($child->innerHTML()));
+                                        if(strlen($string)>0)
+                                                $array[] = $string;
+                            }
+                            else {
+                                $children = $child->getChildren();
+                                $var = true;
+                                foreach($children as $c) {
+                                        $var2 = false;
+                                        foreach($tags as $tag) {
+                                                $t = strtolower($c->getTag()->name());
+                                                if($t==$tag)
+                                                        $var2 = true;
+                                        }
+                                        if(!$var2) {
+                                                $var = false;
+                                        }
+                                }
+                                if(!$var && count($children)>0) {
+                                        $a = self::getChunksHelper($child);
+                                        if(count($a)>0)
+                                                $array = array_merge($array, $a);
+                                }
+                                else {
+                                        $string = trim(strip_tags($child->innerHTML()));
+                                        if(strlen($string)>0)
+                                                $array[] = $string;
+                                }
+                            }
+                        }
                     }
             }
             else if ($data!==false) {
@@ -359,12 +367,12 @@ class Downloader extends Controller
     private function goToBranch($root, $string) {
         $current = $root;
         $array = split("-", $string);
-        for($i = 1; $i<count($array); $i++) { // root jest pierwszy
+        for($i = 1; $i<count($array) && !($current instanceof Dom\TextNode); $i++) { // root jest pierwszy
             $pos = split(":", $array[$i]);
             $children = $current->getChildren();
             $j = 1;
             $got = false;
-            for($k=0; $i<count($children) && !$got; $k++) {
+            for($k=0; $k<count($children) && !$got; $k++) {
                 $tag = $children[$k]->getTag()->name();
                 if($tag===$pos[0]) {
                     if($j==$pos[1]) {
@@ -375,8 +383,10 @@ class Downloader extends Controller
                         $j++;
                 }
             }
-            if(!$got && $i<count($array)-1) // nie znaleziono w drzewie
+            if(!$got && $i<count($array)-1) {
+                echo $string." not found<BR>"; // nie znaleziono w drzewie
                 return false;
+            }
         }
         return $current;
         
@@ -406,7 +416,6 @@ class Downloader extends Controller
     }
 
     private function prepareTreeForLoadFile($path) {
-        echo $path."<BR>";
         $dom = new Dom();
         $dom->loadFromFile($path, ["whitespaceTextNode"=>false]);
         $tree = $dom->root;
