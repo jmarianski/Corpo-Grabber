@@ -1,6 +1,8 @@
 var url1 = "/corpo-grabber/download/project";
 var project;
 var selected = 0;
+var colors = ["#aaaaff", "#55ffff", "#ff55ff", "#eeee22", "#ffff55"];
+
 var loadFiles = function() {
     project = $("#project").val();
     project += "/web/";
@@ -75,6 +77,14 @@ var loadPreview = function() {
     
 };
 
+var set_colors_to_buttons = function() {
+    $("#noterow").css("background-color", colors[0]);
+    $("#authorrow").css("background-color", colors[1]);
+    $("#titlerow").css("background-color", colors[2]);
+    $("#daterow").css("background-color", colors[3]);
+    $("#textrow").css("background-color", colors[4]);
+};
+
 var sendRequest = function() {
     var data = {};
     data["fields"] = elements;
@@ -82,7 +92,7 @@ var sendRequest = function() {
     var json = JSON.stringify(data);
         $.post(url1, {"mode": "savePattern", "project":project, "data":json}, function(data, status) {
         if(data.indexOf("error")!=0) {
-            show_iframe(data);
+            window.open(data);
         }
         else {
             alert(data);
@@ -154,26 +164,19 @@ var remove_selection = function() {
 var change_color_on_select = function(s) {
     if(selecting!=null && valid_place(selecting, s.id)) {
         elements[selecting] = s.id;
-        apply_color_select(s.id, selecting);
+        reload_colors();
         toggle_but(selecting);
     }
 };
 
-var apply_color_select = function(id, type) {
-    reload_colors();
-    var elem = $(document.getElementById(id));
-    var color = get_color_select(type);
-    elem.css("background-color", color);
-        
-};
-
 var get_color_select = function(type) {
-    if(type=="note") 
-        return "#9999ff";
-    else if(type=="text") 
-        return  "#ffff00";
-    else 
-        return "#dddd00";
+    switch(type) {
+        case "note": return colors[0]; break;
+        case "author": return colors[1]; break;
+        case "title": return colors[2]; break;
+        case "date": return colors[3]; break;
+        case "text": return colors[4]; break;
+    }
 };
 
 var change_color_on_hover = function(elem) {
@@ -184,8 +187,26 @@ var change_color_on_hover = function(elem) {
 var reload_colors = function() {
     $("div.skeleton div" ).css("background-color", "");
     for(var key in elements) {
-        $(document.getElementById(elements[key])).css("background-color", 
-                get_color_select(key));
+    var color = [];
+        for(var key2 in elements) {
+            if(elements[key]==elements[key2])
+                color.push(get_color_select(key2));
+        }
+        if(color.length>1) {
+            var string = "linear-gradient(to right, ";
+            for(var i=0; i<color.length; i++) {
+                if(i>0)
+                    string +=", ";
+                string += color[i];
+            }
+            string += ")";
+            $(document.getElementById(elements[key])).css("background", 
+                string);
+        }
+        else {
+            $(document.getElementById(elements[key])).css("background-color", 
+                    color[0]);
+        }
     }
 };
 

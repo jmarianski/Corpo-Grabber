@@ -120,6 +120,9 @@ use Core\Language;
 </tr>
 </table>
 <script src="/corpo-grabber/app/templates/default/js/load.js" type="text/javascript"></script>
+<script>
+        set_colors_to_buttons();
+</script>
 <?php
 if(strlen($_POST['url'])>0) {
     ?><script>

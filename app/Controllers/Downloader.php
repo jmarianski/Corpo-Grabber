@@ -41,7 +41,7 @@ class Downloader extends Controller
         
         public static function removeCharacters($string) {
             $pos = strrpos($string, "http://");
-            if($pos==0)
+            if($pos===0)
                 $pos = 7;
             else
                 $pos = 0;
@@ -198,11 +198,12 @@ class Downloader extends Controller
                     $result = [];
                     $i = 0;
                     foreach($array as $file) {
-                        if(file_exists($project.$file)) {
-                            $result["document-".($i++)] = self::applyPatternToFile($project.$file, $data['fields'], $data['ignore']);
+                        if(!is_dir($project.$file) && (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
+                                    || pathinfo($project.$file, PATHINFO_EXTENSION)=="htm")) {
+                            $result[$file] = self::applyPatternToFile($project.$file, $data['fields'], $data['ignore']);
                         }
                     }
-                    echo json_encode($result);
+                    echo self::encode_results($result, $project, "");
                 }
                 else
                     echo 'error3';
@@ -216,6 +217,27 @@ class Downloader extends Controller
         else {
             echo 'error nonote'; 
         }
+    }
+    
+    private function encode_results($array, $project, $method) {
+        switch($method) {
+            case "xces":
+                break;
+            case "ccl":
+                break;
+            default:
+                $text = json_encode($array);
+                $file = $project."results/";
+                if(!is_dir($file))
+                    mkdir($file);
+                $i = 0;
+                while(is_file($file.$i.".txt"))
+                        $i++;
+                $file = $file.$i.".txt";
+                file_put_contents($file, $text);
+                return "/corpo-grabber/".$file;
+        }
+        return "";
     }
     
     private function applyPatternToFile($file, $fields, $ignore) {
@@ -287,22 +309,22 @@ class Downloader extends Controller
     }
     
     private function applyPatternToSection($branches) {
-        /*
         $vals = array_values($branches);
         for($i = 0; $i<count($vals); $i++) {
-            for($j = 0; $j<count($vals); $i++) {
-                if($vals[$j]!== false && $vals[$j]->isAncestor($vals[$i].id())) {
-                    $vals[$j]->delete();
+            for($j = $i; $j<count($vals); $j++) {
+                if($vals[$j]!== false && $vals[$i]!== false && 
+                        $vals[$j]!== null && $vals[$i]!== null && 
+                        $vals[$j]->isAncestor($vals[$i]->id())) {
+                    $vals[$j]->getParent()->removeChild($vals[$j]->id());
                 }
             }
-        }*/
+        }
         $result = [];
         // elementy zostały rozłączone
         foreach($branches as $key => $value) {
             $array = self::getChunksHelper($value);
-            for($i = 0; $i<count($array); $i++) {
-                $result[$key."-".$i] = $array[$i];
-            }
+            if(count($array)>0)
+                $result[$key] = $array;
         }
         return $result;
 		
@@ -313,7 +335,7 @@ class Downloader extends Controller
             // allowable tags
             $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
             $array = array();
-            if($data!==false && !($data instanceof Dom\TextNode) && $data->hasChildren()) {
+            if($data!==null && !($data instanceof Dom\TextNode) && $data->hasChildren()) {
                     if(count($data->getChildren())>0) {
                         foreach($data->getChildren() as $child) {
                             if($child instanceof Dom\TextNode) {
@@ -349,7 +371,7 @@ class Downloader extends Controller
                         }
                     }
             }
-            else if ($data!==false) {
+            else if ($data!==null) {
                 if(strlen(trim($data->text()))>0)
                     $array[] = trim($data->text());
             }
@@ -384,8 +406,8 @@ class Downloader extends Controller
                 }
             }
             if(!$got && $i<count($array)-1) {
-                echo $string." not found<BR>"; // nie znaleziono w drzewie
-                return false;
+                // echo $string." not found<BR>";
+                return null;
             }
         }
         return $current;
