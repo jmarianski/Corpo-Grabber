@@ -91,7 +91,7 @@ var sendRequest = function() {
     data["ignore"] = [];
     var json = JSON.stringify(data);
         $.post(url1, {"mode": "savePattern", "project":project, "data":json}, function(data, status) {
-        if(data.indexOf("error")!=0) {
+        if(data.indexOf("error")!==0) {
             window.open(data);
         }
         else {

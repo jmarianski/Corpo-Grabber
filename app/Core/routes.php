@@ -20,6 +20,9 @@ Router::any('download/preview', 'Controllers\Downloader@preview');
 Router::any('download/load', 'Controllers\Downloader@load_project');
 Router::any('download/download', 'Controllers\Downloader@download');
 Router::any('download/download_httrack', 'Controllers\Downloader@download_httrack');
+Router::any('download/download_wget', 'Controllers\Downloader@download_wget');
+Router::any('download/download_wget_post', 'Controllers\Downloader@post_process_wget');
+Router::any('download/download_wget_status', 'Controllers\Downloader@get_wget_download_status');
 Router::any('download/multiple', 'Controllers\Downloader@download_multiple');
 Router::any('download/project', 'Controllers\Downloader@project');
 

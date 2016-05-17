@@ -55,6 +55,59 @@ class Downloader extends Controller
 		echo self::getPage($_POST['url'], $_POST['num_words'], $_POST['depth']);
 	}
         
+        private function execInBackground($cmd) {
+            if (substr(php_uname(), 0, 7) == "Windows"){
+                pclose(popen("start /B ". $cmd, "r")); 
+            }
+            else {
+                exec($cmd . " > /dev/null &");  
+            }
+        } 
+        
+        public function download_wget() {
+            $URL = $_POST['url'];
+            $path_local = ((($_POST['path']==""))?(date("Y-m-d")." ".self::removeCharacters($URL)):$_POST['path']);
+            $path = "tmp/".$path_local."/web/";
+            $exec_time = $_POST['exec_time'];
+            if($exec_time==0)
+                $exec_time = 10;
+            if(strlen($URL)>0 && strrpos($URL, " ")===false) {
+                if(!is_dir($path))
+                    mkdir($path, "0777", true);
+                if(strpos($URL, "http://")===0)
+                        $URL = substr($URL, 7);
+                if(strpos($URL, "www.")===0)
+                        $URL = substr($URL, 4);
+                $path_log = $path."log.txt";
+                $cmd = "wget --recursive -nd --page-requisites --html-extension --convert-links "
+                        . "--restrict-file-names=windows -P \"$path\" -A html,htm  -w 1 --random-wait "
+                        . "--domains $URL --no-parent $URL -o \"$path_log\" -nv";
+                self::execInBackground($cmd);
+                echo "OK ".$path_local;
+            }
+            else
+                echo "error with params, URL: ".$URL.", exec_time = ".$exec_time." (< 300)";
+        }
+        
+        public function post_process_wget() {
+            $path = $_POST['path'];
+            $path = "tmp/".$path."/web";
+            self::postprocess($path);
+        }
+        
+        public function get_wget_download_status() {
+            $path = $_POST['path'];
+            $path = "tmp/".$path."/web/log.txt";
+            if(file_exists($path))
+                echo str_replace("\n", "<BR>", file_get_contents($path));
+            else
+                echo "error no log file";
+        }
+        
+        private function postprocess($project) {
+            self::checkHashes($project);
+            self::removeScripts($project);
+        }
         public function download_httrack() {
             ini_set('max_execution_time', 1300);
             $URL = $_POST['url'];
@@ -66,8 +119,7 @@ class Downloader extends Controller
             if(strlen($URL)>0 && strrpos($URL, " ")===false && $exec_time<300) {
                 $cmd = "httrack -p1 --max-time=$exec_time --stay-on-same-domain --can-go-down --clean --do-not-log --quiet --utf8-conversion -O \"$path\" -N1 -D \"$URL\"";
                 exec($cmd." 2>&1", $string);
-                self::checkHashes($path."/web/");
-                self::removeScripts($path."/web/");
+                self::postprocess($path."/web");
                 echo $path_local.'<BR>';
                 foreach($string as $s)
                     echo $s."<BR>";
@@ -226,16 +278,22 @@ class Downloader extends Controller
             case "ccl":
                 break;
             default:
-                $text = json_encode($array);
-                $file = $project."results/";
-                if(!is_dir($file))
-                    mkdir($file);
-                $i = 0;
-                while(is_file($file.$i.".txt"))
-                        $i++;
-                $file = $file.$i.".txt";
-                file_put_contents($file, $text);
-                return "/corpo-grabber/".$file;
+                $text = json_encode($array, true);
+                if(strlen($text)<2) {
+                    echo "error ".json_last_error_msg();
+                    ob_start();
+                    var_dump($array);
+                    $text = ob_get_clean();
+                }
+                    $file = $project."results/";
+                    if(!is_dir($file))
+                        mkdir($file);
+                    $i = 0;
+                    while(is_file($file.$i.".txt"))
+                            $i++;
+                    $file = $file.$i.".txt";
+                    file_put_contents($file, $text);
+                    return "/corpo-grabber/".$file;
         }
         return "";
     }
@@ -395,7 +453,7 @@ class Downloader extends Controller
             $j = 1;
             $got = false;
             for($k=0; $k<count($children) && !$got; $k++) {
-                $tag = $children[$k]->getTag()->name();
+                $tag = self::getTag($children[$k]);
                 if($tag===$pos[0]) {
                     if($j==$pos[1]) {
                         $current = $children[$k];
@@ -459,14 +517,14 @@ class Downloader extends Controller
             $string = "<div id='$name'>";
         else
             $string = "<div id='root' class='skeleton'>";
-        $tag = $branch->getTag()->name();
+        $tag = self::getTag($branch);
         if(!($branch instanceof Dom\TextNode))
             $string.= "\n<B>$tag</B><BR>";
         if(!($branch instanceof Dom\TextNode) && $branch->hasChildren()) {
             $children = $branch->getChildren();
             $items = [];
             for($i=0; $i<count($children); $i++) {
-                $tag = $children[$i]->getTag()->name();
+                $tag = self::getTag($children[$i]);
                 if(array_key_exists($tag, $items))
                     $items[$tag]++;
                 else
@@ -480,6 +538,16 @@ class Downloader extends Controller
         }
         $string .= "\n</div>";
         return $string;
+    }
+    
+    private function getTag($branch) {
+        $tag = $branch->getTag();
+        if($tag->getAttribute("class")!=false) {
+            $tag = $tag->name() . "." . str_replace(["-", ".", ":"], "_", $tag->getAttribute("class")['value']);
+        } else {
+            $tag = $tag->name();
+        }
+        return $tag;
     }
         
 

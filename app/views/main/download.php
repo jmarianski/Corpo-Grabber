@@ -18,7 +18,7 @@ use Core\Language;
             <td width="20%">Adres strony</td>
             <td><input id="url" placeholder="np. http://wiadomosci.dziennik.pl"></td>
         </tr>
-        <tr>
+        <tr style="visibility: collapse">
             <td>Ogranicz czas pobierania (w sekundach)</td>
             <td><input id="exec_time" placeholder="np. 100"></td>
         </tr>
@@ -32,7 +32,8 @@ use Core\Language;
     <div id="Log"></div>
 </div>
 <script>
-    var url1 = "/corpo-grabber/download/download_httrack";
+    var url1 = "/corpo-grabber/download/download_wget";
+    var url2 = "/corpo-grabber/download/download_wget_status";
     var counter = 0;
     var date = new Date();
     var countdown;
@@ -48,6 +49,18 @@ use Core\Language;
         $.post(url1, {"url":url, "exec_time":exec_time, "path":path}, doAfterDownload);
         timer();
     }; 
+    
+    
+    var getLogs = function(path) {
+        setTimeout(function() {
+             $.post(url2, {"path":path}, function(data) {
+                 $("#Log").html(data);
+                 getLogs(path);
+             });
+            }, 1000);
+    }; 
+    
+    
     var timer = function() {
         time_begin = date.getTime();
         counter = 0;
@@ -63,13 +76,17 @@ use Core\Language;
         alert(string);
     };
     var doAfterDownload = function(data, status) {
-        // first line is project name
-    var firstLine = data.substr(0, data.indexOf("<BR>"));
-    var rest = data.substr(data.indexOf("<BR>")+4);
-        $("#Log").html("Zapisano w " + firstLine+"<BR>"
-        +"Poniżej znajdują się logi programu httrack<BR>"+rest
-        +"<form method=POST action=\"load\"><input type=hidden name=url value=\""+firstLine+"\"><input type=submit value=\"Idź do edycji\"></form>");
-        clearInterval(countdown);
+
+        var code = data.substr(0, data.indexOf(" "));
+        var value = data.substr(data.indexOf(" ")+1);
+                clearInterval(countdown);
+        if(code==="OK") {
+            $("#Licznik").html("Rozpoczęto pobieranie, jak chcesz rozpocząć formatowanie, kliknij w link"
+            +"<form method=POST action=\"load\"><input type=hidden name=url value=\""+value+"\"><input type=submit value=\"Idź do edycji\"></form>");
+            getLogs(value);
+        } else {
+            $("#Log").html("Niepowodzenie! " + data);
+        }
     };
     $("#submit-step1").click(step1);
 </script>
