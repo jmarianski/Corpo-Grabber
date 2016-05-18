@@ -5,6 +5,7 @@ namespace Controllers;
 use Core\Controller;
 use Core\View;
 use Helpers\PageDownloader;
+use Helpers\Encoding;
 use Modules;
 use PHPHtmlParser\Dom;
 
@@ -240,7 +241,8 @@ class Downloader extends Controller
     }
 
     private function savePattern($project, $data_before_decode) {
-        set_time_limit(300); // TODO: remove later
+        // set_time_limit(300); // TODO: remove later
+        ini_set('max_execution_time', 6000); // 100 minut
         $data = json_decode($data_before_decode, true);
         $project = utf8_decode($project);
         if(strlen($data['fields']['note'])>0 ){
@@ -255,7 +257,7 @@ class Downloader extends Controller
                             $result[$file] = self::applyPatternToFile($project.$file, $data['fields'], $data['ignore']);
                         }
                     }
-                    echo self::encode_results($result, $project, "");
+                    echo self::encode_results($result, $project, "premorph");
                 }
                 else
                     echo 'error3';
@@ -271,11 +273,84 @@ class Downloader extends Controller
         }
     }
     
+    private function premorph_array($array) {
+        $result = "";
+        $xml = new \SimpleXMLElement("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                . "<!DOCTYPE cesAna SYSTEM \"xcesAnaIPI.dtd\">"
+        ."<cesAna version=\"WROC-1.0\" type=\"pre_morph\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">"
+                . "<chunkList>"
+                . "</chunkList>"
+                . "</cesAna>");
+        $chunkList = $xml->chunkList[0];
+        foreach($array as $key => $value) {
+            if(is_string($value)) {
+                $chunk = $chunkList->addChild("chunk", $value);
+                $chunk->addAttribute("type", $key);
+            }
+            else if(is_array($value)) {
+                foreach($value as $v) {
+                    $chunk = $chunkList->addChild("chunk", $v);
+                    $chunk->addAttribute("type", $key);
+                }
+            }
+        }
+        return $xml->asXML();
+    }
+    
+    private function encode_premorph($array) {
+        if(strpos("note", array_keys($array)[0])===0) {
+            $result = [];
+            foreach($array as $key => $value) {
+                $result[$key] = self::premorph_array($value);
+            }
+            return $result;
+        }
+        else {
+            return self::premorph_array($array);
+        }
+    }
+    
     private function encode_results($array, $project, $method) {
         switch($method) {
             case "xces":
                 break;
             case "ccl":
+                break;
+            case "premorph":
+                $results = [];
+                foreach($array as $key => $value) {
+                    $r = self::encode_premorph($value);
+                    if(is_string($r))
+                        $results[$key] = $r;
+                    else if(is_array($r)) {
+                        $i = 1;
+                        foreach($r as $v) {
+                            $results[$key.".".($i++)] = $v;
+                        }
+                    }
+                }
+                // results po kolei zawiera potencjalne nazwy plików i treść
+                $file = $project."premorph/";
+                if(!is_dir($file))
+                    mkdir($file, "0777", true);
+                $i = 0;
+                while(is_file($file."package.$i.zip"))
+                        $i++;
+                $filezip = $file."package.$i.zip";
+		$zip = new \ZipArchive();
+		if($zip->open($filezip,\ZIPARCHIVE::CREATE) !== true) {
+			return false;
+		}
+                foreach($results as $key => $value) {
+                    if(strlen($key)>0) {
+                        file_put_contents($file.$key.".xml", $value);
+			$zip->addFile($file.$key.".xml");
+                    }
+                    else
+                        echo 'error';
+                }
+                $zip->close();
+                return "/corpo-grabber/".$filezip;
                 break;
             default:
                 $text = json_encode($array, true);
@@ -496,8 +571,10 @@ class Downloader extends Controller
     }
 
     private function prepareTreeForLoadFile($path) {
+        $text = file_get_contents($path);
+        $text = iconv(mb_detect_encoding($text), "UTF-8", $text);
         $dom = new Dom();
-        $dom->loadFromFile($path, ["whitespaceTextNode"=>false]);
+        $dom->load($text, ["enforceEncoding"=>"UTF-8", "whitespaceTextNode"=>false]);
         $tree = $dom->root;
         $head = $tree->find("head")[0];
         if($head!=null) {
