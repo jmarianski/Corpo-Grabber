@@ -89,6 +89,11 @@ var sendRequest = function() {
     var data = {};
     data["fields"] = elements;
     data["ignore"] = [];
+    data["research"] = {"note": $("#notein").val(),
+    "author" : $("#authorin").val(),
+    "date" : $("#datein").val(),
+    "title" : $("#titlein").val(),
+    "text" : $("#textin").val()};
     var json = JSON.stringify(data);
         $.post(url1, {"mode": "savePattern", "project":project, "data":json}, function(data, status) {
         if(data.indexOf("error")!==0) {

@@ -69,8 +69,6 @@ use Core\Language;
 		<select id="numWords">
                     <option value="01">0..1</option>
                     <option value="0n">0..n</option>
-                    <option value="11">1..1</option>
-                    <option value="1n">1..n</option>
                 </select>
 		</td>
 	</tr>
@@ -115,7 +113,51 @@ use Core\Language;
 		</td>
 	</tr>
 	</table>
-	<button id="submit">Send request</button>
+    <button id="submit">Send request</button>
+    <BR><HR>
+        Do badań!<BR>
+        <table width="100%">
+	<tr>
+		<td>
+		note:
+		</td>
+		<td>
+                    <input id="notein">
+		</td>
+	</tr>
+	<tr>
+		<td>
+		author:
+		</td>
+		<td>
+                    <input id="authorin">
+		</td>
+	</tr>
+	<tr>
+		<td>
+		title:
+		</td>
+		<td>
+                    <input id="titlein">
+		</td>
+	</tr>
+	<tr>
+		<td>
+		date:
+		</td>
+		<td>
+                    <input id="datein">
+		</td>
+	</tr>
+        <tr>
+		<td>
+		text:
+		</td>
+		<td>
+                    <input id="textin">
+		</td>
+	</tr>
+	</table>
 </td>
 </tr>
 </table>

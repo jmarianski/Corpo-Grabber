@@ -129,6 +129,11 @@ class Downloader extends Controller
                 echo "error with params, URL: ".$URL.", exec_time = ".$exec_time." (< 300)";
         }
         
+        private function log($string) {
+            $file = "tmp/log.txt";
+            file_put_contents($file, date("D M d, Y G:i:s")." ".$string, FILE_APPEND);
+        }
+        
         private function checkHashes($path) {
             if(is_dir($path)) {
                 $array = scandir($path);
@@ -245,19 +250,37 @@ class Downloader extends Controller
         ini_set('max_execution_time', 6000); // 100 minut
         $data = json_decode($data_before_decode, true);
         $project = utf8_decode($project);
+        $research = false;
+        foreach($data['research'] as $r=>$v) {
+            if(strlen($v)>0)
+                $research = true;
+        }
         if(strlen($data['fields']['note'])>0 ){
             if(file_exists($project)) {
                 $array = scandir($project);
                 if($array!==false) {
-                    $result = [];
-                    $i = 0;
-                    foreach($array as $file) {
-                        if(!is_dir($project.$file) && (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
-                                    || pathinfo($project.$file, PATHINFO_EXTENSION)=="htm")) {
-                            $result[$file] = self::applyPatternToFile($project.$file, $data['fields'], $data['ignore']);
+                    if(!$research) {
+                        $result = [];
+                        foreach($array as $file) {
+                            if(!is_dir($project.$file) && (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
+                                        || pathinfo($project.$file, PATHINFO_EXTENSION)=="htm")) {
+                                $result[$file] = self::applyPatternToFile($project.$file, $data);
+                            }
                         }
+                        echo self::encode_results($result, $project, "premorph");
                     }
-                    echo self::encode_results($result, $project, "premorph");
+                    else {
+                        for($i=0; $i<4; $i++) {
+                            $data['researchphase'] = $i;
+                            foreach($array as $file) {
+                                if(!is_dir($project.$file) && (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
+                                            || pathinfo($project.$file, PATHINFO_EXTENSION)=="htm")) {
+                                    $result[$i][$file] = self::applyPatternToFileResearch($project.$file, $data);
+                                }
+                            }
+                        }
+                        echo self::encode_results($result, $project, "research");
+                    }
                 }
                 else
                     echo 'error3';
@@ -282,6 +305,8 @@ class Downloader extends Controller
                 . "</chunkList>"
                 . "</cesAna>");
         $chunkList = $xml->chunkList[0];
+        if(count($array)===0)
+            return "";
         foreach($array as $key => $value) {
             if(is_string($value)) {
                 $chunk = $chunkList->addChild("chunk", $value);
@@ -298,10 +323,12 @@ class Downloader extends Controller
     }
     
     private function encode_premorph($array) {
-        if(strpos("note", array_keys($array)[0])===0) {
+        if(strpos(array_keys($array)[0], "note")===0) {
             $result = [];
             foreach($array as $key => $value) {
-                $result[$key] = self::premorph_array($value);
+                $r = self::premorph_array($value);
+                if(strlen($r)>0)
+                    $result[$key] = $r;
             }
             return $result;
         }
@@ -325,7 +352,8 @@ class Downloader extends Controller
                     else if(is_array($r)) {
                         $i = 1;
                         foreach($r as $v) {
-                            $results[$key.".".($i++)] = $v;
+                            if(is_string($v))
+                                $results[$key.".".($i++)] = $v;
                         }
                     }
                 }
@@ -344,13 +372,29 @@ class Downloader extends Controller
                 foreach($results as $key => $value) {
                     if(strlen($key)>0) {
                         file_put_contents($file.$key.".xml", $value);
-			$zip->addFile($file.$key.".xml");
+			$zip->addFile($file.$key.".xml", $key.".xml");
                     }
                     else
                         echo 'error';
                 }
                 $zip->close();
                 return "/corpo-grabber/".$filezip;
+                break;
+            case "research":
+                $result = [[]];
+                foreach($array as $value) {
+                    $result['xml'][] = self::encode_results($value, $project, "premorph");
+                    $result['size'][] = filesize($_SERVER["DOCUMENT_ROOT"].$result['xml'][count($result['xml'])-1]);
+                }
+                echo "error PODSUMOWANIE\n";
+                self::log( "error PODSUMOWANIE\n");
+                for($i = 0; $i<count($result['xml']); $i++) {
+                    echo "Badanie $i: Rozmiar pliku: ".$result['size'][$i]."\n";
+                    self::log( "Badanie $i: Rozmiar pliku: ".$result['size'][$i]."\n");
+                    echo $result['xml'][$i]."\n";
+                    self::log( $result['xml'][$i]."\n");
+                }
+                
                 break;
             default:
                 $text = json_encode($array, true);
@@ -373,40 +417,44 @@ class Downloader extends Controller
         return "";
     }
     
-    private function applyPatternToFile($file, $fields, $ignore) {
+    private function applyPatternToFile($file, $data) {
         // by now, note exists
         $array = [];
+        $fields = $data['fields'];
+        $ignore = $data['ignore'];
         if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
                                     || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
             $tree = self::prepareTreeForLoadFile($file);
             // delete ignored lines
-            if(true) { // check liczność
+            if(false) { // check liczność
                 $branches = [];
                 foreach($fields as $key => $value) {
                     if($key!="note")
-                        $branches[$key] = self::goToBranch($tree, $value);
+                        $branches[$key] = self::goToBranch($tree, $value, $key);
                 }
                 self::deleteIgnores($tree, "root", $ignore);
                 $array = self::applyPatternToSection($branches);
             } else {
-                $note = self::goToBranch($tree, $fields['note']);
-                $siblings = $note.getParent().getChildren();
-                $newfields = [];
-                foreach($fields as $key => $field) {
-                    if($key!="note") {
-                        $newfields[$key] = str_replace($fields['note'], "root", $field);
+                $note = self::goToBranch($tree, $fields['note'], "note");
+                if($note!=null) {
+                    $siblings = $note->getParent()->getChildren();
+                    $newfields = [];
+                    foreach($fields as $key => $field) {
+                        if($key!="note") {
+                            $newfields[$key] = str_replace($fields['note'], "root", $field);
+                        }
                     }
-                }
-                $i = 0;
-                foreach($siblings as $child) {
-                    // $child to nasz nowy root
-                    $papa = $child->getTag()->getAttribute("id");
-                    $branches = [];
-                    foreach($newfields as $key => $value) {
-                        $branches[$key] = self::goToBranch($note, $value);
+                    $i = 0;
+                    foreach($siblings as $child) {
+                        // $child to nasz nowy root
+                        $papa = $child->getTag()->getAttribute("id");
+                        $branches = [];
+                        foreach($newfields as $key => $value) {
+                            $branches[$key] = self::goToBranch($child, $value, $key);
+                        }
+                        self::deleteIgnores($papa, "root", $ignore);
+                        $array["note-".($i++)] = self::applyPatternToSection($branches);
                     }
-                    self::deleteIgnores($papa, "root", $ignore);
-                    $array["note-".($i++)] = self::applyPatternToSection($branches);
                 }
             }
             unset($tree);
@@ -427,6 +475,82 @@ class Downloader extends Controller
          */
     }
     
+    private function applyPatternToFileResearch($file, $data) {
+        $array = [];
+        $fields = $data['fields'];
+        $research = $data['research'];
+        $phase = $data['researchphase'];
+        self::log( "file: $file<BR>\n");
+        self::log( "phase: $phase<BR>\n");
+        if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
+                                    || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
+            $tree = self::prepareTreeForLoadFile($file);
+            $note = self::goToBranch($tree, $fields['note'], "note");
+            if($note!=null) {
+                $siblings = $note->getParent()->getChildren();
+                $newfields = [];
+                
+            }
+            foreach($fields as $key => $field) {
+                    if($key!="note") {
+                        $newfields[$key] = str_replace($fields['note'], "root", $field);
+                    }
+            }
+            $i = 0;
+            if($phase==0 || $phase==1) { // daddy is selected from position
+                if($phase==0) { // ojciec pozycyjnie, dziecko pozycyjnie
+                    if($note!=null) {
+                        foreach($siblings as $child) {
+                            $branches = [];
+                            foreach($newfields as $key => $value) {
+                                $branches[$key] = self::goToBranch($child, $value, $key);
+                            }
+                            $array["note-".($i++)] = self::applyPatternToSection($branches);
+                        }
+                    }
+                }
+                else { // ojeciec pozycyjnie, dziecko selektorem
+                    if($note!=null) {
+                        foreach($siblings as $child) {
+                            $branches = [];
+                            foreach($research as $k=>$v) {
+                                if($k!=="note") {
+                                    $branches[$k] = self::goToBranchResearch($child, $v, $k);
+                                }
+                            }
+                            $array["note-".($i++)] = self::applyPatternToSection($branches);
+                        }
+                    }
+                }
+            }
+            else { // 2 or 3: daddy is selected from selector
+                $siblings = self::goToBranchResearch($tree, $research['note'], "note");
+                if($phase==2) { // ojciec selektorem, dziecko pozycyjnie
+                    foreach($siblings as $child) {
+                        $branches = [];
+                        foreach($newfields as $key => $value) {
+                            $branches[$key] = self::goToBranch($child, $value, $key);
+                        }
+                            $array["note-".($i++)] = self::applyPatternToSection($branches);
+                    }
+                }
+                else { // ojciec selektorem, dziecko selektorem
+                    foreach($siblings as $child) {
+                        $branches = [];
+                        foreach($research as $k=>$v) {
+                            if($k!=="note") {
+                                $branches[$k] = self::goToBranchResearch($child, $v, $k);
+                            }
+                        }
+                        $array["note-".($i++)] = self::applyPatternToSection($branches);
+                    }
+                }
+            }
+            unset($tree);
+        }
+        return $array;
+    }
+    
     private function deleteIgnores($root, $rootstring, $ignores) {
         $ign = [];
         foreach($ignores as $value) {
@@ -444,17 +568,38 @@ class Downloader extends Controller
     private function applyPatternToSection($branches) {
         $vals = array_values($branches);
         for($i = 0; $i<count($vals); $i++) {
-            for($j = $i; $j<count($vals); $j++) {
-                if($vals[$j]!== false && $vals[$i]!== false && 
-                        $vals[$j]!== null && $vals[$i]!== null && 
-                        $vals[$j]->isAncestor($vals[$i]->id())) {
-                    $vals[$j]->getParent()->removeChild($vals[$j]->id());
+            if($vals[$i] instanceof Dom\Collection) {
+                $vals[$i] = $vals[$i]->toArray();
+                if(count($vals[$i])>0) {
+                    $vals[$i] = $vals[$i][0];
+                }
+            }
+        }
+        for($i = 0; $i<count($vals); $i++) {
+            if($vals[$i] instanceof Dom\Collection) {
+                $vals[$i] = $vals[$i]->toArray();
+                if(count($vals[$i])>0) {
+                    $vals[$i] = $vals[$i][0];
+                    for($j = 0; $j<count($vals); $j++) {
+                        if($vals[$j]!== false && $vals[$i]!== false && 
+                                $vals[$j]!== null && $vals[$i]!== null && 
+                                $vals[$j]->isAncestor($vals[$i]->id())) {
+                            $vals[$j]->getParent()->removeChild($vals[$j]->id());
+                        }
+                    }
                 }
             }
         }
         $result = [];
         // elementy zostały rozłączone
         foreach($branches as $key => $value) {
+            if($value instanceof Dom\Collection)
+                $value = $value->toArray();
+            if(is_array($value))
+                if(count($value)>0)
+                    $value = $value[0];
+                else
+                    $value = null;
             $array = self::getChunksHelper($value);
             if(count($array)>0)
                 $result[$key] = $array;
@@ -463,50 +608,68 @@ class Downloader extends Controller
 		
     }
     
+    private function checkChildren($data) { 
+            // allowable tags
+        $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", 
+            "sub", "sup", "img", "text", "span", "br", "small");
+        if(($data===null || $data instanceof Dom\TextNode) || !$data->hasChildren())
+            return false;
+        else {
+            $children = [$data];
+            $var = true;
+            for($i = 0; $i<count($children) && $var; $i++) {
+                $child = $children[$i];
+                if(!($child instanceof Dom\TextNode)) {
+                    $children = array_merge($children, $child->getChildren());
+                    $var2 = false;
+                    foreach($tags as $tag) {
+                        $t = strtolower($child->getTag()->name());
+                        if($t==$tag)
+                            $var2 = true;
+                    }
+                    if(!$var2) {
+                        $var = false;
+                    }
+                }
+            }
+            return $var;
+        }
+    }
+    
     	
     private function getChunksHelper($data) {
-            // allowable tags
-            $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", "sub", "sup", "img", "text", "span", "br", "small");
             $array = array();
-            if($data!==null && !($data instanceof Dom\TextNode) && $data->hasChildren()) {
-                    if(count($data->getChildren())>0) {
-                        foreach($data->getChildren() as $child) {
-                            if($child instanceof Dom\TextNode) {
-                                $string = trim(strip_tags($child->innerHTML()));
-                                        if(strlen($string)>0)
-                                                $array[] = $string;
+            if($data!==null && ($data instanceof Dom\InnerNode) && $data->hasChildren()) {
+                $var = self::checkChildren($data);
+                if($var) {
+                    if(strlen(trim($data->text()))>0)
+                        $array[] = trim($data->text(true));
+                }
+                else {
+                    $children = $data->getChildren();
+                    $concat = "";
+                    foreach($children as $child) {
+                        if(self::checkChildren($child)) {
+                            $concat .= trim($child->text(true))." ";
+                        }
+                        else {
+                            if(strlen($concat)>0) {
+                                $array[] = $concat;
+                                $concat = "";
                             }
-                            else {
-                                $children = $child->getChildren();
-                                $var = true;
-                                foreach($children as $c) {
-                                        $var2 = false;
-                                        foreach($tags as $tag) {
-                                                $t = strtolower($c->getTag()->name());
-                                                if($t==$tag)
-                                                        $var2 = true;
-                                        }
-                                        if(!$var2) {
-                                                $var = false;
-                                        }
-                                }
-                                if(!$var && count($children)>0) {
-                                        $a = self::getChunksHelper($child);
-                                        if(count($a)>0)
-                                                $array = array_merge($array, $a);
-                                }
-                                else {
-                                        $string = trim(strip_tags($child->innerHTML()));
-                                        if(strlen($string)>0)
-                                                $array[] = $string;
-                                }
-                            }
+                            $array = array_merge($array, self::getChunksHelper($child));
                         }
                     }
+                    if(strlen($concat)>0) {
+                        $array[] = $concat;
+                        $concat = "";
+                    }
+                }
             }
             else if ($data!==null) {
-                if(strlen(trim($data->text()))>0)
-                    $array[] = trim($data->text());
+                $text = trim($data->text(true));
+                if(strlen($text)>0)
+                    $array[] = $text;
             }
             return $array;
     }
@@ -519,17 +682,19 @@ class Downloader extends Controller
      * @param type $string
      * @return HTMLNode|boolean
      */
-    private function goToBranch($root, $string) {
+    private function goToBranch($root, $string, $type) {
         $current = $root;
         $array = split("-", $string);
         for($i = 1; $i<count($array) && !($current instanceof Dom\TextNode); $i++) { // root jest pierwszy
             $pos = split(":", $array[$i]);
+            $beforedot = split("\.", $pos[0])[0];
+            
             $children = $current->getChildren();
             $j = 1;
             $got = false;
             for($k=0; $k<count($children) && !$got; $k++) {
-                $tag = self::getTag($children[$k]);
-                if($tag===$pos[0]) {
+                $tag = $children[$k]->getTag()->name();
+                if($tag===$beforedot) {
                     if($j==$pos[1]) {
                         $current = $children[$k];
                         $got = true;
@@ -539,12 +704,17 @@ class Downloader extends Controller
                 }
             }
             if(!$got && $i<count($array)-1) {
-                // echo $string." not found<BR>";
+                //if($type==="note")
+                //    echo $string." not found, $beforedot<BR>";
                 return null;
             }
         }
         return $current;
         
+    }
+    
+    private function goToBranchResearch($root, $string, $type) {
+        return $root->find($string);
     }
     
     private function getFiles($project) {
@@ -572,7 +742,7 @@ class Downloader extends Controller
 
     private function prepareTreeForLoadFile($path) {
         $text = file_get_contents($path);
-        $text = iconv(mb_detect_encoding($text), "UTF-8", $text);
+        $text = Encoding::toUTF8($text);
         $dom = new Dom();
         $dom->load($text, ["enforceEncoding"=>"UTF-8", "whitespaceTextNode"=>false]);
         $tree = $dom->root;
@@ -594,7 +764,7 @@ class Downloader extends Controller
             $string = "<div id='$name'>";
         else
             $string = "<div id='root' class='skeleton'>";
-        $tag = self::getTag($branch);
+        $tag = self::getTextTag($branch);
         if(!($branch instanceof Dom\TextNode))
             $string.= "\n<B>$tag</B><BR>";
         if(!($branch instanceof Dom\TextNode) && $branch->hasChildren()) {
@@ -602,12 +772,13 @@ class Downloader extends Controller
             $items = [];
             for($i=0; $i<count($children); $i++) {
                 $tag = self::getTag($children[$i]);
-                if(array_key_exists($tag, $items))
-                    $items[$tag]++;
+                $tag_simple = $children[$i]->getTag()->name();
+                if(array_key_exists($tag_simple, $items))
+                    $items[$tag_simple]++;
                 else
-                    $items[$tag] = 1;
+                    $items[$tag_simple] = 1;
                 $string.= "\n".self::skeletonBranch($children[$i], 
-                        $name."-".$tag.":".$items[$tag]);
+                        $name."-".$tag.":".$items[$tag_simple]);
             }
         }
         else {
@@ -621,6 +792,16 @@ class Downloader extends Controller
         $tag = $branch->getTag();
         if($tag->getAttribute("class")!=false) {
             $tag = $tag->name() . "." . str_replace(["-", ".", ":"], "_", $tag->getAttribute("class")['value']);
+        } else {
+            $tag = $tag->name();
+        }
+        return $tag;
+    }
+    
+    private function getTextTag($branch) {
+        $tag = $branch->getTag();
+        if($tag->getAttribute("class")!=false) {
+            $tag = $tag->name() . "." .$tag->getAttribute("class")['value'];
         } else {
             $tag = $tag->name();
         }
