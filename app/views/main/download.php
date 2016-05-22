@@ -55,9 +55,10 @@ use Core\Language;
         setTimeout(function() {
              $.post(url2, {"path":path}, function(data) {
                  $("#Log").html(data);
-                 getLogs(path);
+                 if($("#Log").html()!==data)
+                    getLogs(path);
              });
-            }, 1000);
+            }, 5000);
     }; 
     
     

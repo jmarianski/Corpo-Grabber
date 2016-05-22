@@ -73,16 +73,20 @@ class Downloader extends Controller
             if($exec_time==0)
                 $exec_time = 10;
             if(strlen($URL)>0 && strrpos($URL, " ")===false) {
+                $URL_short = $URL;
                 if(!is_dir($path))
                     mkdir($path, "0777", true);
-                if(strpos($URL, "http://")===0)
-                        $URL = substr($URL, 7);
-                if(strpos($URL, "www.")===0)
-                        $URL = substr($URL, 4);
+                if(strpos($URL_short, "http://") === 0)
+                        $URL_short = substr($URL_short, 7);
+                if(strpos($URL_short, "www.") === 0)
+                        $URL_short = substr($URL_short, 4);
+                $URL_short = split("/", $URL_short);
+                $URL_short = $URL_short[0];
                 $path_log = $path."log.txt";
                 $cmd = "wget --recursive -nd --page-requisites --html-extension --convert-links "
                         . "--restrict-file-names=windows -P \"$path\" -A html,htm  -w 1 --random-wait "
-                        . "--domains $URL --no-parent $URL -o \"$path_log\" -nv";
+                        . "--domains $URL_short --no-parent $URL -o \"$path_log\" -nv";
+                self::log($cmd."\n");
                 self::execInBackground($cmd);
                 echo "OK ".$path_local;
             }
@@ -98,9 +102,16 @@ class Downloader extends Controller
         
         public function get_wget_download_status() {
             $path = $_POST['path'];
-            $path = "tmp/".$path."/web/log.txt";
-            if(file_exists($path))
-                echo str_replace("\n", "<BR>", file_get_contents($path));
+            $p = "tmp/".$path."/web/";
+            $path = $p."/log.txt";
+            if(file_exists($path)) {
+                self::checkHashes($p);
+                $file = file_get_contents($path);
+                $file = explode("\n", $file);
+                $file = array_reverse($file);
+                $file = implode("\n", $file);
+                echo str_replace("\n", "<BR>", $file);
+            }
             else
                 echo "error no log file";
         }
@@ -142,11 +153,18 @@ class Downloader extends Controller
                     $file = $path.$file;
                     if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
                                             || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
-                        $hash = hash_file("md5", $file);
+                        $file = getcwd()."/".$file;
+                        $hash = filesize($file);
                         if(in_array($hash, $hashes))
                             unlink ($file);
-                        else
+                        else {
                             $hashes[] = $hash;
+                            $hash = sha1_file($file);
+                            if(in_array($hash, $hashes))
+                                unlink ($file);
+                            else
+                                $hashes[] = $hash;
+                        }
                     }
                 }
             }
@@ -160,9 +178,10 @@ class Downloader extends Controller
                     $file = $path.$file;
                     if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
                                             || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
-                        $dom = new Dom();
-                        $dom->loadFromFile($file, []);
-                        file_put_contents($file, $dom->root->innerHTML());
+                        $html = file_get_contents($file);
+                        $html2 = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
+                        if(strlen($html2)!=strlen($html))
+                            file_put_contents($file, $html2);
                     }
                 }
             }
@@ -224,6 +243,7 @@ class Downloader extends Controller
         $path = utf8_decode($_POST['path']);
         switch($mode) {
             case "files":
+                self::postprocess($_POST['project']);
                 self::getFiles($_POST['project']);
                 break;
             case "loadSkeleton":
@@ -271,6 +291,7 @@ class Downloader extends Controller
                     }
                     else {
                         for($i=0; $i<4; $i++) {
+                            $this->phase = $i;
                             $data['researchphase'] = $i;
                             foreach($array as $file) {
                                 if(!is_dir($project.$file) && (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
@@ -386,15 +407,69 @@ class Downloader extends Controller
                     $result['xml'][] = self::encode_results($value, $project, "premorph");
                     $result['size'][] = filesize($_SERVER["DOCUMENT_ROOT"].$result['xml'][count($result['xml'])-1]);
                 }
-                echo "error PODSUMOWANIE\n";
+                $string = "PODSUMOWANIE\n";
                 self::log( "error PODSUMOWANIE\n");
                 for($i = 0; $i<count($result['xml']); $i++) {
-                    echo "Badanie $i: Rozmiar pliku: ".$result['size'][$i]."\n";
+                    $string .= "Badanie $i: Rozmiar pliku: ".$result['size'][$i]."\n";
                     self::log( "Badanie $i: Rozmiar pliku: ".$result['size'][$i]."\n");
-                    echo $result['xml'][$i]."\n";
+                    $string .= $result['xml'][$i]."\n";
                     self::log( $result['xml'][$i]."\n");
                 }
-                
+                echo "error ".$string;
+                $string = str_replace("\n", "<BR>\n", $string);
+                $rep = [];
+                foreach($this->report as $phase=>$files) {
+                    $notes = 0;
+                    $valids = 0;
+                    self::log( "test phase<BR>\n");
+                    foreach($files as $file=>$branches) {
+                self::log( "test file<BR>\n");
+                        $note = $branches['note'];
+                        while(is_array($note))
+                            $note = $note[0];
+                        $notes += $note;
+                        $valid = 0;
+                        for($i=0; $i<$note; $i++) {
+                            $var = true;
+                            foreach($branches as $branch=>$value) {
+                self::log( "test branch<BR>\n");
+                                if(is_array($value)) {
+                                    // not note
+                                    if($value[$i]===0)
+                                        $var = false;
+                                }
+                            }
+                            if($var)
+                                $valid++;
+                        }
+                        $valids += $valid;
+                        $rep[0][$phase][$file][0] = $note;
+                        $rep[0][$phase][$file][1] = $valid;
+                        if($note!=0)
+                            $rep[0][$phase][$file][2] = $valid/$note;
+                    }
+                    $rep[1][$phase][0] = $notes;
+                    $rep[1][$phase][1] = $valids;
+                    if($notes!=0)
+                        $rep[1][$phase][2] = $valids/$notes;
+                }
+                self::log( "test<BR>\n");
+                $formatter = new \NumberFormatter('en_US', \NumberFormatter::PERCENT);
+                self::log( "test<BR>\n");
+                $string .= "Faza / Notek / Poprawnych / Wart. procentowa<BR>\n";
+                foreach($rep[1] as $phase=>$a) {
+                    $string.="$phase ".$a[0]." ".$a[1]." ".$formatter->format($a[2])."<BR>\n";
+                }
+                self::log( "test<BR>\n");
+                $string .= "Faza / Plik / Notek / Poprawnych / Wart. procentowa<BR>\n";
+                foreach($rep[0] as $phase=>$files) {
+                    foreach($files as $file=>$a)
+                        $string .= "$phase ".$file." ".$a[0]." ".$a[1]." ".$formatter->format($a[2])."<BR>\n";
+                }
+                self::log( "test<BR>\n");
+                $file = $project."premorph/";
+                file_put_contents($file."report.html", $string);
+                self::log( "test<BR>\n");
                 break;
             default:
                 $text = json_encode($array, true);
@@ -430,10 +505,10 @@ class Downloader extends Controller
                 $branches = [];
                 foreach($fields as $key => $value) {
                     if($key!="note")
-                        $branches[$key] = self::goToBranch($tree, $value, $key);
+                        $branches[$key] = self::goToBranch($tree, $value, $key, $file);
                 }
                 self::deleteIgnores($tree, "root", $ignore);
-                $array = self::applyPatternToSection($branches);
+                $array = self::applyPatternToSection($branches, $file);
             } else {
                 $note = self::goToBranch($tree, $fields['note'], "note");
                 if($note!=null) {
@@ -441,7 +516,7 @@ class Downloader extends Controller
                     $newfields = [];
                     foreach($fields as $key => $field) {
                         if($key!="note") {
-                            $newfields[$key] = str_replace($fields['note'], "root", $field);
+                            $newfields[$key] = str_replace($fields['note'], "root", $field, $file);
                         }
                     }
                     $i = 0;
@@ -450,10 +525,10 @@ class Downloader extends Controller
                         $papa = $child->getTag()->getAttribute("id");
                         $branches = [];
                         foreach($newfields as $key => $value) {
-                            $branches[$key] = self::goToBranch($child, $value, $key);
+                            $branches[$key] = self::goToBranch($child, $value, $key, $file);
                         }
                         self::deleteIgnores($papa, "root", $ignore);
-                        $array["note-".($i++)] = self::applyPatternToSection($branches);
+                        $array["note-".($i++)] = self::applyPatternToSection($branches, $file);
                     }
                 }
             }
@@ -475,6 +550,9 @@ class Downloader extends Controller
          */
     }
     
+    private $report = [];
+    private $phase = 0;
+    
     private function applyPatternToFileResearch($file, $data) {
         $array = [];
         $fields = $data['fields'];
@@ -485,12 +563,8 @@ class Downloader extends Controller
         if(!is_dir($file) && (pathinfo($file, PATHINFO_EXTENSION)=="html" 
                                     || pathinfo($file, PATHINFO_EXTENSION)=="htm")) {
             $tree = self::prepareTreeForLoadFile($file);
-            $note = self::goToBranch($tree, $fields['note'], "note");
-            if($note!=null) {
-                $siblings = $note->getParent()->getChildren();
+            $note = self::goToBranch($tree, $fields['note'], "note", $file);
                 $newfields = [];
-                
-            }
             foreach($fields as $key => $field) {
                     if($key!="note") {
                         $newfields[$key] = str_replace($fields['note'], "root", $field);
@@ -498,14 +572,19 @@ class Downloader extends Controller
             }
             $i = 0;
             if($phase==0 || $phase==1) { // daddy is selected from position
+                if($note!=null) {
+                    $siblings = $note->getParent()->getChildren();
+                    $this->report[$this->phase][$file]["note"] = count($siblings);
+                
+                }
                 if($phase==0) { // ojciec pozycyjnie, dziecko pozycyjnie
                     if($note!=null) {
                         foreach($siblings as $child) {
                             $branches = [];
                             foreach($newfields as $key => $value) {
-                                $branches[$key] = self::goToBranch($child, $value, $key);
+                                $branches[$key] = self::goToBranch($child, $value, $key, $file);
                             }
-                            $array["note-".($i++)] = self::applyPatternToSection($branches);
+                            $array["note-".($i++)] = self::applyPatternToSection($branches, $file);
                         }
                     }
                 }
@@ -515,23 +594,23 @@ class Downloader extends Controller
                             $branches = [];
                             foreach($research as $k=>$v) {
                                 if($k!=="note") {
-                                    $branches[$k] = self::goToBranchResearch($child, $v, $k);
+                                    $branches[$k] = self::goToBranchResearch($child, $v, $k, $file);
                                 }
                             }
-                            $array["note-".($i++)] = self::applyPatternToSection($branches);
+                            $array["note-".($i++)] = self::applyPatternToSection($branches, $file);
                         }
                     }
                 }
             }
             else { // 2 or 3: daddy is selected from selector
-                $siblings = self::goToBranchResearch($tree, $research['note'], "note");
+                $siblings = self::goToBranchResearch($tree, $research['note'], "note", $file);
                 if($phase==2) { // ojciec selektorem, dziecko pozycyjnie
                     foreach($siblings as $child) {
                         $branches = [];
                         foreach($newfields as $key => $value) {
-                            $branches[$key] = self::goToBranch($child, $value, $key);
+                            $branches[$key] = self::goToBranch($child, $value, $key, $file);
                         }
-                            $array["note-".($i++)] = self::applyPatternToSection($branches);
+                            $array["note-".($i++)] = self::applyPatternToSection($branches, $file);
                     }
                 }
                 else { // ojciec selektorem, dziecko selektorem
@@ -539,10 +618,10 @@ class Downloader extends Controller
                         $branches = [];
                         foreach($research as $k=>$v) {
                             if($k!=="note") {
-                                $branches[$k] = self::goToBranchResearch($child, $v, $k);
+                                $branches[$k] = self::goToBranchResearch($child, $v, $k, $file);
                             }
                         }
-                        $array["note-".($i++)] = self::applyPatternToSection($branches);
+                        $array["note-".($i++)] = self::applyPatternToSection($branches, $file);
                     }
                 }
             }
@@ -565,7 +644,7 @@ class Downloader extends Controller
         }
     }
     
-    private function applyPatternToSection($branches) {
+    private function applyPatternToSection($branches, $file) {
         $vals = array_values($branches);
         for($i = 0; $i<count($vals); $i++) {
             if($vals[$i] instanceof Dom\Collection) {
@@ -682,7 +761,7 @@ class Downloader extends Controller
      * @param type $string
      * @return HTMLNode|boolean
      */
-    private function goToBranch($root, $string, $type) {
+    private function goToBranch($root, $string, $type, $file) {
         $current = $root;
         $array = split("-", $string);
         for($i = 1; $i<count($array) && !($current instanceof Dom\TextNode); $i++) { // root jest pierwszy
@@ -706,15 +785,20 @@ class Downloader extends Controller
             if(!$got && $i<count($array)-1) {
                 //if($type==="note")
                 //    echo $string." not found, $beforedot<BR>";
+                
+                $this->report[$this->phase][$file][$type][] = 0;
                 return null;
             }
         }
+        $this->report[$this->phase][$file][$type][] = 1;
         return $current;
         
     }
     
-    private function goToBranchResearch($root, $string, $type) {
-        return $root->find($string);
+    private function goToBranchResearch($root, $string, $type, $file) {
+        $result = $root->find($string);
+        $this->report[$this->phase][$file][$type][] = $result->count();
+        return $result;
     }
     
     private function getFiles($project) {
@@ -742,9 +826,9 @@ class Downloader extends Controller
 
     private function prepareTreeForLoadFile($path) {
         $text = file_get_contents($path);
-        $text = Encoding::toUTF8($text);
+        //$text = Encoding::toUTF8($text);
         $dom = new Dom();
-        $dom->load($text, ["enforceEncoding"=>"UTF-8", "whitespaceTextNode"=>false]);
+        $dom->load($text, [/*"enforceEncoding"=>"UTF-8", */"whitespaceTextNode"=>false]);
         $tree = $dom->root;
         $head = $tree->find("head")[0];
         if($head!=null) {
