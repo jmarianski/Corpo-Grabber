@@ -268,6 +268,7 @@ class Downloader extends Controller
     private function savePattern($project, $data_before_decode) {
         // set_time_limit(300); // TODO: remove later
         ini_set('max_execution_time', 6000); // 100 minut
+        session_write_close();
         $data = json_decode($data_before_decode, true);
         $project = utf8_decode($project);
         $research = false;
@@ -315,6 +316,8 @@ class Downloader extends Controller
         else {
             echo 'error nonote'; 
         }
+        
+    session_start();
     }
     
     private function premorph_array($array) {
