@@ -158,6 +158,9 @@ use Core\Language;
 		</td>
 	</tr>
 	</table>
+        <BR>
+        Aby uzyskać wyniki badania metod, musisz umożliwić stronie na otwieranie okienek typu pop-up.
+        <div id="belowresearch"></div>
 </td>
 </tr>
 </table>

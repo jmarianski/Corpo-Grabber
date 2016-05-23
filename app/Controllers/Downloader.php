@@ -267,7 +267,7 @@ class Downloader extends Controller
 
     private function savePattern($project, $data_before_decode) {
         // set_time_limit(300); // TODO: remove later
-        ini_set('max_execution_time', 6000); // 100 minut
+        ini_set('max_execution_time', 60000); // 1000 minut
         session_write_close();
         $data = json_decode($data_before_decode, true);
         $project = utf8_decode($project);
@@ -291,10 +291,19 @@ class Downloader extends Controller
                         echo self::encode_results($result, $project, "premorph");
                     }
                     else {
+                        $array2 = [];
+                        for($j=0; $j<100; $j++) {
+                            $file = $array[rand(0, count($array)-1)];
+                            if(!is_dir($project.$file) && !in_array($file, $array2) &&
+                                    (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
+                                            || pathinfo($project.$file, PATHINFO_EXTENSION)=="htm")) {
+                                $array2[] = $file;
+                            }
+                        }
                         for($i=0; $i<4; $i++) {
                             $this->phase = $i;
                             $data['researchphase'] = $i;
-                            foreach($array as $file) {
+                            foreach($array2 as $file) {
                                 if(!is_dir($project.$file) && (pathinfo($project.$file, PATHINFO_EXTENSION)=="html" 
                                             || pathinfo($project.$file, PATHINFO_EXTENSION)=="htm")) {
                                     $result[$i][$file] = self::applyPatternToFileResearch($project.$file, $data);
@@ -418,15 +427,12 @@ class Downloader extends Controller
                     $string .= $result['xml'][$i]."\n";
                     self::log( $result['xml'][$i]."\n");
                 }
-                echo "error ".$string;
                 $string = str_replace("\n", "<BR>\n", $string);
                 $rep = [];
                 foreach($this->report as $phase=>$files) {
                     $notes = 0;
                     $valids = 0;
-                    self::log( "test phase<BR>\n");
                     foreach($files as $file=>$branches) {
-                self::log( "test file<BR>\n");
                         $note = $branches['note'];
                         while(is_array($note))
                             $note = $note[0];
@@ -435,7 +441,6 @@ class Downloader extends Controller
                         for($i=0; $i<$note; $i++) {
                             $var = true;
                             foreach($branches as $branch=>$value) {
-                self::log( "test branch<BR>\n");
                                 if(is_array($value)) {
                                     // not note
                                     if($value[$i]===0)
@@ -456,23 +461,19 @@ class Downloader extends Controller
                     if($notes!=0)
                         $rep[1][$phase][2] = $valids/$notes;
                 }
-                self::log( "test<BR>\n");
                 $formatter = new \NumberFormatter('en_US', \NumberFormatter::PERCENT);
-                self::log( "test<BR>\n");
                 $string .= "Faza / Notek / Poprawnych / Wart. procentowa<BR>\n";
                 foreach($rep[1] as $phase=>$a) {
                     $string.="$phase ".$a[0]." ".$a[1]." ".$formatter->format($a[2])."<BR>\n";
                 }
-                self::log( "test<BR>\n");
                 $string .= "Faza / Plik / Notek / Poprawnych / Wart. procentowa<BR>\n";
                 foreach($rep[0] as $phase=>$files) {
                     foreach($files as $file=>$a)
                         $string .= "$phase ".$file." ".$a[0]." ".$a[1]." ".$formatter->format($a[2])."<BR>\n";
                 }
-                self::log( "test<BR>\n");
                 $file = $project."premorph/";
                 file_put_contents($file."report.html", $string);
-                self::log( "test<BR>\n");
+                echo "/corpo-grabber/".$file."report.html";
                 break;
             default:
                 $text = json_encode($array, true);
@@ -513,7 +514,7 @@ class Downloader extends Controller
                 self::deleteIgnores($tree, "root", $ignore);
                 $array = self::applyPatternToSection($branches, $file);
             } else {
-                $note = self::goToBranch($tree, $fields['note'], "note");
+                $note = self::goToBranch($tree, $fields['note'], "note", $file);
                 if($note!=null) {
                     $siblings = $note->getParent()->getChildren();
                     $newfields = [];
@@ -693,9 +694,9 @@ class Downloader extends Controller
     private function checkChildren($data) { 
             // allowable tags
         $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", 
-            "sub", "sup", "img", "text", "span", "br", "small");
+            "sub", "sup", "img", "text", "span", "br", "small", "del");
         if(($data===null || $data instanceof Dom\TextNode) || !$data->hasChildren())
-            return false;
+            return true;
         else {
             $children = [$data];
             $var = true;
@@ -793,7 +794,8 @@ class Downloader extends Controller
                 return null;
             }
         }
-        $this->report[$this->phase][$file][$type][] = 1;
+        if($type!=="note")
+            $this->report[$this->phase][$file][$type][] = 1;
         return $current;
         
     }

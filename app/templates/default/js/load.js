@@ -12,7 +12,9 @@ var loadFiles = function() {
 var loadFilesParams = function(project, url) {
     var select = document.getElementById("subsite");
     $("#subsite").empty();
+    $("button").attr("disabled", "true");
     $.post(url, {"project":project, "mode":"files"}, function(data, status) {
+    $("button").not($("#rightbar button")).attr("disabled", null);
         if(data.indexOf("error")!=0) {
             var array = data.split("<BR>");
             for(var i=0; i<array.length; i++) {
@@ -39,7 +41,10 @@ var loadFilesParams = function(project, url) {
 
 var loadSkeleton = function() {
     var path = $("#subsite").val();
+    reset_buttons();
+    $("button").attr("disabled", "true");
     $.post(url1, {"path":path, "mode":"loadSkeleton"}, function(data, status) {
+    $("button").not($("#rightbar button")).attr("disabled", null);
         if(data!="error") {
             remove_selection();
             $("#skeleton").html(data);
@@ -47,11 +52,11 @@ var loadSkeleton = function() {
             $("div.skeleton div").click(function(e) {
                 e.stopPropagation();
                 select_branch(this);});
-            $("#rightbar button").prop('disabled', false);
+            $("#rightbar button").attr('disabled', false);
         }
         else {
             $("#preview").html("Błąd! Nie ma takiej strony w tym projekcie.");
-            $("#rightbar button").prop('disabled', true);
+            $("#rightbar button").attr('disabled', true);
         }
 
     });
@@ -86,6 +91,7 @@ var set_colors_to_buttons = function() {
 };
 
 var sendRequest = function() {
+    $("button").attr("disabled", "true");
     var data = {};
     data["fields"] = elements;
     data["ignore"] = [];
@@ -102,7 +108,7 @@ var sendRequest = function() {
         else {
             alert(data);
         }
-
+        $("button").attr("disabled", null);
     });
 };
 
@@ -228,7 +234,7 @@ var change_color_on_unhover = function(elem) {
 };
 
 var apply_hover_effect = function(id) {
-    $("#rightbar button:not(#"+id+")").prop('disabled', true);
+    $("#rightbar button:not(#"+id+")").attr('disabled', true);
             $("div.skeleton div").hover(function(e) {
                 e.stopPropagation();
                 change_color_on_hover(this);
@@ -237,7 +243,7 @@ var apply_hover_effect = function(id) {
             });
 };
 var disable_hover_effect = function(id) {
-    $("#rightbar button:not(#"+id+")").prop('disabled', false);
+    $("#rightbar button:not(#"+id+")").attr('disabled', false);
     $("div.skeleton div").off("mouseenter mouseleave");
 };
 
@@ -281,12 +287,23 @@ var toggle_but = function(id) {
         apply_hover_effect(id);
     }
 };
+
+var reset_buttons = function() {
+    selecting = null;
+    elements = {};
+    $("#note").html("Zaznacz");
+    $("#author").html("Zaznacz");
+    $("#date").html("Zaznacz");
+    $("#title").html("Zaznacz");
+    $("#text").html("Zaznacz");
+};
+
 var click_but = function(elem) {
     toggle_but(elem.id);
 };
 
 window.onload = function() {setSize();
-    $("#rightbar button").prop('disabled', true);};
+    $("#rightbar button").attr('disabled', true);};
 window.onresize = function() {setSize();};
 $("body").css("overflow", "hidden");
 
