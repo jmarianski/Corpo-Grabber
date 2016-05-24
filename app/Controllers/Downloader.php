@@ -265,6 +265,8 @@ class Downloader extends Controller
         }
     }
 
+    private $methods = [];
+    
     private function savePattern($project, $data_before_decode) {
         // set_time_limit(300); // TODO: remove later
         ini_set('max_execution_time', 60000); // 1000 minut
@@ -291,6 +293,10 @@ class Downloader extends Controller
                         echo self::encode_results($result, $project, "premorph");
                     }
                     else {
+                        $fields = $data['fields'];
+                        $research = $data['research'];
+                        $this->methods[0] = $fields;
+                        $this->methods[1] = $research;
                         $array2 = [];
                         for($j=0; $j<100; $j++) {
                             $file = $array[rand(0, count($array)-1)];
@@ -428,6 +434,14 @@ class Downloader extends Controller
                     self::log( $result['xml'][$i]."\n");
                 }
                 $string = str_replace("\n", "<BR>\n", $string);
+                $string.= "Do ektrakcji pozycyjnej uzyto nastepujacych atrybutow:<BR>\n";
+                foreach($this->methods[0] as $key=>$val) {
+                    $string .= $key. " => ".$val. "<BR>\n";
+                }
+                $string.= "Do ektrakcji selektorem uzyto nastepujacych atrybutow:<BR>\n";
+                foreach($this->methods[1] as $key=>$val) {
+                    $string .= $key. " => ".$val. "<BR>\n";
+                }
                 $rep = [];
                 foreach($this->report as $phase=>$files) {
                     $notes = 0;
@@ -656,20 +670,20 @@ class Downloader extends Controller
                 if(count($vals[$i])>0) {
                     $vals[$i] = $vals[$i][0];
                 }
+            } 
+            if (is_array($vals[$i]) && count($vals[$i])>0) {
+                $vals[$i] = $vals[$i][0];
+            }
+            else if(is_array($vals[$i])) {
+                $vals[$i] = null;
             }
         }
         for($i = 0; $i<count($vals); $i++) {
-            if($vals[$i] instanceof Dom\Collection) {
-                $vals[$i] = $vals[$i]->toArray();
-                if(count($vals[$i])>0) {
-                    $vals[$i] = $vals[$i][0];
-                    for($j = 0; $j<count($vals); $j++) {
-                        if($vals[$j]!== false && $vals[$i]!== false && 
-                                $vals[$j]!== null && $vals[$i]!== null && 
-                                $vals[$j]->isAncestor($vals[$i]->id())) {
-                            $vals[$j]->getParent()->removeChild($vals[$j]->id());
-                        }
-                    }
+            for($j = 0; $j<count($vals); $j++) {
+                if($vals[$j]!== false && $vals[$i]!== false && 
+                        $vals[$j]!== null && $vals[$i]!== null && 
+                        $vals[$j]->isAncestor($vals[$i]->id())) {
+                    $vals[$j]->getParent()->removeChild($vals[$j]->id());
                 }
             }
         }
@@ -683,7 +697,7 @@ class Downloader extends Controller
                     $value = $value[0];
                 else
                     $value = null;
-            $array = self::getChunksHelper($value);
+            $array = self::getChunksHelper($value, $key);
             if(count($array)>0)
                 $result[$key] = $array;
         }
@@ -694,8 +708,8 @@ class Downloader extends Controller
     private function checkChildren($data) { 
             // allowable tags
         $tags = array("b", "i", "u", "a", "strong", "em", "mark", "ins", 
-            "sub", "sup", "img", "text", "span", "br", "small", "del");
-        if(($data===null || $data instanceof Dom\TextNode) || !$data->hasChildren())
+            "sub", "sup", "img", "text", "span", "small", "del");
+        if(($data===null || $data instanceof Dom\TextNode))
             return true;
         else {
             $children = [$data];
@@ -720,13 +734,14 @@ class Downloader extends Controller
     }
     
     	
-    private function getChunksHelper($data) {
+    private function getChunksHelper($data, $type) {
             $array = array();
             if($data!==null && ($data instanceof Dom\InnerNode) && $data->hasChildren()) {
                 $var = self::checkChildren($data);
                 if($var) {
-                    if(strlen(trim($data->text()))>0)
-                        $array[] = trim($data->text(true));
+                    $text = trim($data->text(true));
+                    if(strlen($text)>0)
+                        $array[] = $text;
                 }
                 else {
                     $children = $data->getChildren();
@@ -740,7 +755,7 @@ class Downloader extends Controller
                                 $array[] = $concat;
                                 $concat = "";
                             }
-                            $array = array_merge($array, self::getChunksHelper($child));
+                            $array = array_merge($array, self::getChunksHelper($child, $type));
                         }
                     }
                     if(strlen($concat)>0) {
@@ -750,6 +765,8 @@ class Downloader extends Controller
                 }
             }
             else if ($data!==null) {
+                if(is_array($data))
+                    $data = $data[0];
                 $text = trim($data->text(true));
                 if(strlen($text)>0)
                     $array[] = $text;
@@ -786,7 +803,7 @@ class Downloader extends Controller
                         $j++;
                 }
             }
-            if(!$got && $i<count($array)-1) {
+            if(!$got && $i<=count($array)-1) {
                 //if($type==="note")
                 //    echo $string." not found, $beforedot<BR>";
                 
@@ -831,6 +848,7 @@ class Downloader extends Controller
 
     private function prepareTreeForLoadFile($path) {
         $text = file_get_contents($path);
+        $text = str_replace("&", "&amp;", $text);
         //$text = Encoding::toUTF8($text);
         $dom = new Dom();
         $dom->load($text, [/*"enforceEncoding"=>"UTF-8", */"whitespaceTextNode"=>false]);
