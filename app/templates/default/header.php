@@ -57,10 +57,10 @@ $hooks->run('afterBody');
 <input style="display:table-cell; width:100%" name=page value="<?=strlen($_GET['page'])>0?$_GET['page']:"http://google.com"?>">
 </form>
 </td><td>
-<a href="/corpo-grabber/download/multiple">Advanced download</a>
+<a href="/corpo-grabber/download/multiple">Pobieranie zaawansowane</a>
 </td>
 <td>
-    <a href="/corpo-grabber/download/load">Review previous download</a>
+    <a href="/corpo-grabber/download/load">Ekstrakcja wzorca</a>
 </td>
 </tr>
 </table>
