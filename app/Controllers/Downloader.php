@@ -417,7 +417,7 @@ class Downloader extends Controller
                         echo 'error';
                 }
                 $zip->close();
-                return "/corpo-grabber/".$filezip;
+                return "/corporanet/".$filezip;
                 break;
             case "research":
                 $result = [[]];
@@ -487,7 +487,7 @@ class Downloader extends Controller
                 }
                 $file = $project."premorph/";
                 file_put_contents($file."report.html", $string);
-                echo "/corpo-grabber/".$file."report.html";
+                echo "/corporanet/".$file."report.html";
                 break;
             default:
                 $text = json_encode($array, true);
@@ -505,7 +505,7 @@ class Downloader extends Controller
                             $i++;
                     $file = $file.$i.".txt";
                     file_put_contents($file, $text);
-                    return "/corpo-grabber/".$file;
+                    return "/corporanet/".$file;
         }
         return "";
     }

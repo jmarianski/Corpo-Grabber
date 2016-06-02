@@ -46,7 +46,7 @@ $(document).ready(function(){
 			$("#page-example").html("Loading...");
 		var num_words = $("#numWords").val();
 		var depth = $("#leafDepth").val();
-		$.post("/corpo-grabber/download/preview", {"url":"<?=addslashes($data['url'])?>", "num_words":num_words, "depth":depth}, function(data, status){
+		$.post("/corporanet/download/preview", {"url":"<?=addslashes($data['url'])?>", "num_words":num_words, "depth":depth}, function(data, status){
 			$("#page-example").html(data);
 		});
 	};

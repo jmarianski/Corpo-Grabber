@@ -32,8 +32,8 @@ use Core\Language;
     <div id="Log"></div>
 </div>
 <script>
-    var url1 = "/corpo-grabber/download/download_wget";
-    var url2 = "/corpo-grabber/download/download_wget_status";
+    var url1 = "/corporanet/download/download_wget";
+    var url2 = "/corporanet/download/download_wget_status";
     var counter = 0;
     var date = new Date();
     var countdown;

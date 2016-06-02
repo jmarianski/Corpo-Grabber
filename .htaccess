@@ -1,7 +1,7 @@
 Options -Indexes
 
 	RewriteEngine On
-	RewriteBase /corpo-grabber/
+	RewriteBase /corporanet/
 
 	# Force to exclude the trailing slash
 	RewriteCond %{REQUEST_FILENAME} !-d

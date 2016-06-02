@@ -51,16 +51,16 @@ $hooks->run('afterBody');
 <table class="header">
 <tr>
 <td width="33%">
-<a href="/corpo-grabber/">Index</a></td>
+<a href="/corporanet/">Index</a></td>
 <td width="33%">
-<form method=get action="/corpo-grabber/download/single">
+<form method=get action="/corporanet/download/single">
 <input style="display:table-cell; width:100%" name=page value="<?=strlen($_GET['page'])>0?$_GET['page']:"http://google.com"?>">
 </form>
 </td><td>
-<a href="/corpo-grabber/download/multiple">Pobieranie zaawansowane</a>
+<a href="/corporanet/download/multiple">Pobieranie zaawansowane</a>
 </td>
 <td>
-    <a href="/corpo-grabber/download/load">Ekstrakcja wzorca</a>
+    <a href="/corporanet/download/load">Ekstrakcja wzorca</a>
 </td>
 </tr>
 </table>

@@ -1,4 +1,4 @@
-var url1 = "/corpo-grabber/download/project";
+var url1 = "/corporanet/download/project";
 var project;
 var selected = 0;
 var colors = ["#aaaaff", "#55ffff", "#ff55ff", "#eeee22", "#ffff55"];

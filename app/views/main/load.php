@@ -164,7 +164,7 @@ use Core\Language;
 </td>
 </tr>
 </table>
-<script src="/corpo-grabber/app/templates/default/js/load.js" type="text/javascript"></script>
+<script src="/corporanet/app/templates/default/js/load.js" type="text/javascript"></script>
 <script>
         set_colors_to_buttons();
 </script>
