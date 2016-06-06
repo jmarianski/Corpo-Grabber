@@ -22,5 +22,7 @@ h1.middle { margin-top: 20px; }
 h2 { font-size: 14px; margin: 5px 0 5px 0; border-left: 15px solid #727DB2; border-bottom: 1px solid #727DB2; padding-left: 5px; }
 h3 { font-size: 12px; margin: 5px; }
 
+img {border: solid black 1px; margin: 10px auto; display: block; }
+
 a { color: #334499; text-decoration: none; }
 a:hover { text-decoration: underline; }

@@ -84,9 +84,7 @@ class Index extends Controller
      */
     public function subPage()
     {
-        $data['title'] = $this->language->get('subpage_text');
-        $data['welcome_message'] = $this->language->get('subpage_message');
-
+        $data['title'] = "Poradnik";
         View::renderTemplate('header', $data);
         View::render('welcome/subpage', $data);
         View::renderTemplate('footer', $data);
